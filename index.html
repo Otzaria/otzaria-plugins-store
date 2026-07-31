@@ -261,6 +261,18 @@
     .btn-secondary { background: var(--color-surface-card); color: var(--color-on-surface); border: 1.5px solid var(--color-outline-strong); }
     .btn-secondary:hover { background: var(--color-surface); border-color: var(--color-on-surface); }
 
+    /* ספינר קטן בתוך כפתור התקנה בזמן המתנה לתוצאה */
+    .btn-spinner {
+      display: inline-block;
+      width: 11px; height: 11px;
+      border: 2px solid currentColor;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      vertical-align: -1px;
+      margin-left: 6px;
+    }
+
     /* ── מצבים ── */
     #loading, #error, #empty {
       display: flex; flex-direction: column;
@@ -665,8 +677,8 @@
 </div>
 
 <script>
-  const API = 'https://otzaria.org/api/plugins';
   const BASE = 'https://otzaria.org';
+  const API = BASE + '/api/plugins';
   // תמונת ברירת מחדל לתוסף ללא תמונה. נטענת ישירות מ-otzaria.org (כבר ב-allowlist),
   // לא נארזת בחבילה — הקובץ ~2MB והחנות ממילא דורשת רשת.
   const DEFAULT_IMG = BASE + '/logo.svg';
@@ -782,12 +794,7 @@
     });
 
     list.querySelectorAll('.update-btn').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        btn.disabled = true;
-        btn.textContent = 'מעדכן...';
-        await installPlugin(btn.dataset.url);
-        btn.textContent = 'נשלח ✓';
-      });
+      btn.addEventListener('click', () => installPluginTracked(btn, btn.dataset.url));
     });
 
     const updateAllBtn = document.getElementById('update-all-btn');
@@ -795,15 +802,12 @@
     updateAllBtn.textContent = 'עדכן הכל';
     updateAllBtn.onclick = async () => {
       updateAllBtn.disabled = true;
-      updateAllBtn.textContent = 'שולח...';
+      updateAllBtn.textContent = 'מעדכן...';
       const btns = list.querySelectorAll('.update-btn:not(:disabled)');
       for (const btn of btns) {
-        btn.disabled = true;
-        btn.textContent = 'מעדכן...';
-        await installPlugin(btn.dataset.url);
-        btn.textContent = 'נשלח ✓';
+        await installPluginTracked(btn, btn.dataset.url);
       }
-      updateAllBtn.textContent = 'הכל נשלח ✓';
+      updateAllBtn.textContent = 'הושלם ✓';
     };
 
     show('updates-backdrop');
@@ -1219,18 +1223,8 @@
 
     document.getElementById('back-btn').onclick = showListPage;
 
-    document.getElementById('detail-install-btn').addEventListener('click', async (e) => {
-      const btn = e.currentTarget;
-      btn.disabled = true;
-      btn.textContent = 'מתקין...';
-      try {
-        await installPlugin(btn.dataset.url);
-        btn.textContent = 'נשלח ✓';
-      } catch (err) {
-        btn.disabled = false;
-        btn.textContent = 'התקנה';
-        alert('שגיאה בהתקנה: ' + err.message);
-      }
+    document.getElementById('detail-install-btn').addEventListener('click', (e) => {
+      installPluginTracked(e.currentTarget, e.currentTarget.dataset.url);
     });
 
     detail.querySelectorAll('.detail-tag').forEach(tagEl => {
@@ -1279,21 +1273,88 @@
   function show(id) { document.getElementById(id).classList.remove('hidden'); }
   function hide(id) { document.getElementById(id).classList.add('hidden'); }
 
-  async function installPlugin(downloadUrl) {
-    await Otzaria.call('plugin.requestInstall', { url: downloadUrl });
+  // ── מעקב תוצאת התקנה ─────────────────────────────────────────────
+  // לפני ההתקנה יוצרים טוקן חד-פעמי מול ה-API של האתר, מוסרים אותו לאוצריא
+  // (שמדווחת עליו הצלחה/כישלון), ועושים polling על הסטטוס כדי להציג את
+  // התוצאה על הכפתור. כשל בכל שלב כאן אינו עוצר את ההתקנה — פשוט אין מעקב
+  // (בדיוק ההתנהגות הישנה, "נשלח ✓").
+  const POLL_INTERVAL_MS = 2000;
+  const POLL_TIMEOUT_MS = 2 * 60 * 1000;
+
+  async function apiFetch(url, options) {
+    const res = await Otzaria.call('network.fetch', { url, ...(options || {}) });
+    if (!res.success) throw new Error(res.error?.message || 'שגיאת רשת');
+    return res.data;
   }
 
-  document.getElementById('grid').addEventListener('click', async (e) => {
+  // מזהה התוסף בקטלוג לפי כתובת ההורדה שלו (הכפתורים נושאים רק data-url).
+  function pluginIdByDownloadUrl(downloadUrl) {
+    const p = allPlugins.find(p => {
+      const u = p.downloadUrl.startsWith('http') ? p.downloadUrl : BASE + p.downloadUrl;
+      return u === downloadUrl;
+    });
+    return p ? p.id : null;
+  }
+
+  async function createInstallToken(downloadUrl) {
+    const pluginId = pluginIdByDownloadUrl(downloadUrl);
+    if (!pluginId) return null;
+    try {
+      const res = await apiFetch(`${API}/${pluginId}/install-token`, { method: 'POST' });
+      if (res.status !== 200) return null;
+      return JSON.parse(res.body).token || null;
+    } catch { return null; }
+  }
+
+  // polling על תוצאת ההתקנה; מחזיר 'success' | 'failure' | 'no_report'.
+  async function waitForInstallResult(token) {
+    const startedAt = Date.now();
+    while (Date.now() - startedAt < POLL_TIMEOUT_MS) {
+      await new Promise(r => setTimeout(r, POLL_INTERVAL_MS));
+      try {
+        const res = await apiFetch(`${BASE}/api/plugins/install-result?token=${encodeURIComponent(token)}`);
+        if (res.status === 404) return 'no_report';
+        if (res.status !== 200) continue;
+        const data = JSON.parse(res.body);
+        if (data.status === 'success' || data.status === 'failure') return data.status;
+      } catch { /* שגיאת רשת זמנית — ננסה שוב */ }
+    }
+    return 'no_report';
+  }
+
+  // התקנה עם מעקב: מציג "מתקין..." עם ספינר לאורך כל ההמתנה, ומעדכן את
+  // הכפתור לפי התוצאה בפועל שדווחה מאוצריא.
+  async function installPluginTracked(btn, downloadUrl) {
+    btn.disabled = true;
+    btn.innerHTML = '<span class="btn-spinner"></span>מתקין...';
+    const token = await createInstallToken(downloadUrl);
+    try {
+      await Otzaria.call('plugin.requestInstall', {
+        url: downloadUrl,
+        ...(token ? { token, callback: `${BASE}/api/plugins/install-result` } : {}),
+      });
+    } catch (err) {
+      btn.disabled = false;
+      btn.textContent = 'שגיאה';
+      return;
+    }
+    if (!token) { btn.textContent = 'נשלח ✓'; return; }
+
+    const result = await waitForInstallResult(token);
+    if (result === 'success') {
+      btn.textContent = 'הותקן בהצלחה!';
+    } else if (result === 'failure') {
+      btn.disabled = false;
+      btn.textContent = 'ההתקנה נכשלה - לחץ שוב לנסיון נוסף';
+    } else {
+      btn.textContent = 'נשלח ✓';
+    }
+  }
+
+  document.getElementById('grid').addEventListener('click', (e) => {
     const btn = e.target.closest('.install-btn');
     if (!btn) return;
-    btn.disabled = true;
-    btn.textContent = 'מתקין...';
-    try {
-      await installPlugin(btn.dataset.url);
-      btn.textContent = 'נשלח ✓';
-    } catch (err) {
-      btn.textContent = 'שגיאה';
-    }
+    installPluginTracked(btn, btn.dataset.url);
   });
 
   document.getElementById('lightbox-close').onclick = () => hide('lightbox');
