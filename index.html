@@ -138,6 +138,39 @@
       direction: rtl;
     }
 
+    /* ── סוויץ' "הסתר מותקנים" ── */
+    #hide-installed-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: var(--fs-13);
+      font-weight: 600;
+      color: var(--color-text);
+      cursor: pointer;
+      white-space: nowrap;
+      user-select: none;
+    }
+    #hide-installed-wrap input { display: none; }
+    #hide-installed-wrap .switch {
+      width: 34px; height: 18px;
+      border-radius: 9px;
+      background: var(--color-outline-strong);
+      position: relative;
+      transition: background .15s;
+      flex-shrink: 0;
+    }
+    #hide-installed-wrap .switch::after {
+      content: '';
+      position: absolute;
+      top: 2px; right: 2px;
+      width: 14px; height: 14px;
+      border-radius: 50%;
+      background: var(--color-surface-card);
+      transition: transform .15s;
+    }
+    #hide-installed-wrap input:checked + .switch { background: var(--color-accent); }
+    #hide-installed-wrap input:checked + .switch::after { transform: translateX(-16px); }
+
     /* ── תגיות ── */
     #tags-wrap { background: var(--color-surface-soft); border-bottom: 1px solid var(--color-divider); }
     #tags { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 20px 6px; }
@@ -256,8 +289,9 @@
       border: none;
       transition: all .15s;
     }
+    .btn:disabled { opacity: .6; cursor: default; }
     .btn-primary { background: var(--color-accent); color: var(--color-on-accent); }
-    .btn-primary:hover { background: var(--color-primary-hover); }
+    .btn-primary:hover:not(:disabled) { background: var(--color-primary-hover); }
     .btn-secondary { background: var(--color-surface-card); color: var(--color-on-surface); border: 1.5px solid var(--color-outline-strong); }
     .btn-secondary:hover { background: var(--color-surface); border-color: var(--color-on-surface); }
 
@@ -618,6 +652,75 @@
       padding: 4px; transition: color .15s;
     }
     #new-toast .toast-close:hover { color: var(--color-on-accent); }
+
+    /* ── סרגל קטגוריות ── */
+    #cats-bar {
+      background: var(--color-surface-card);
+      border-bottom: 1px solid var(--color-outline);
+      padding: 10px 20px;
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+    }
+    #cats-bar::-webkit-scrollbar { height: 6px; }
+    #cats-bar::-webkit-scrollbar-thumb { background: var(--color-outline-strong); border-radius: var(--radius-3); }
+    .cat-chip {
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: var(--radius-20);
+      font-size: var(--fs-13);
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--color-outline-strong);
+      background: var(--color-surface-soft);
+      color: var(--color-text);
+      transition: background-color .15s, color .15s, border-color .15s;
+      white-space: nowrap;
+    }
+    .cat-chip:hover { border-color: var(--color-on-surface); color: var(--color-on-surface); }
+    .cat-chip.active { background: var(--color-accent); color: var(--color-on-accent); border-color: var(--color-accent); }
+    .cat-chip .chip-count { font-size: var(--fs-11); opacity: .75; }
+    /* "כל התוספים" — מוצא אחרון מוצנע בסוף השורה */
+    .cat-chip.all-chip { border-style: dashed; background: none; color: var(--color-text-faint); }
+    .cat-chip.all-chip:hover { color: var(--color-on-surface); }
+
+    /* ── דף הבית האצור ── */
+    #home { padding: 20px; display: flex; flex-direction: column; gap: 28px; }
+    .home-section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+    .home-section-title { font-size: var(--fs-18); font-weight: 800; color: var(--color-on-surface); }
+    .home-section-desc { font-size: var(--fs-13); color: var(--color-text-muted); margin-top: 2px; }
+    .home-see-all {
+      background: none; border: none; cursor: pointer;
+      color: var(--color-text); font-size: var(--fs-13); font-weight: 700;
+      white-space: nowrap; padding: 4px 0; transition: color .15s;
+    }
+    .home-see-all:hover { color: var(--color-on-surface); text-decoration: underline; }
+    .home-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+    .home-row { display: flex; gap: 16px; overflow-x: auto; padding-bottom: 8px; scroll-snap-type: x proximity; }
+    .home-row::-webkit-scrollbar { height: 6px; }
+    .home-row::-webkit-scrollbar-thumb { background: var(--color-outline-strong); border-radius: var(--radius-3); }
+    .home-row .card { width: 280px; flex-shrink: 0; scroll-snap-align: start; }
+    .home-footer-strip {
+      text-align: center;
+      padding: 12px 0 4px;
+      border-top: 1px dashed var(--color-outline-strong);
+      font-size: var(--fs-13);
+      color: var(--color-text-muted);
+    }
+    .home-footer-strip button {
+      background: none; border: none; cursor: pointer;
+      color: var(--color-text); font-weight: 700; font-size: var(--fs-13);
+      text-decoration: underline; transition: color .15s;
+    }
+    .home-footer-strip button:hover { color: var(--color-on-surface); }
+
+    /* ── כותרת תצוגה (קטגוריה / תוצאות חיפוש) ── */
+    #view-title { padding: 16px 20px 0; }
+    #view-title h2 { font-size: var(--fs-18); font-weight: 800; color: var(--color-on-surface); }
+    #view-title p { font-size: var(--fs-13); color: var(--color-text-muted); margin-top: 4px; }
   </style>
 </head>
 <body>
@@ -636,12 +739,22 @@
     <option value="beta">בטא</option>
     <option value="experimental">ניסיוני</option>
   </select>
+  <label id="hide-installed-wrap" title="הסתרת תוספים שכבר מותקנים אצלך (למעט כאלה עם עדכון זמין)">
+    <input type="checkbox" id="hide-installed">
+    <span class="switch"></span>
+    <span>הסתר מותקנים</span>
+  </label>
 </div>
+
+<div id="cats-bar" class="hidden"></div>
 
 <div id="tags-wrap" class="hidden">
   <div id="tags"></div>
   <button id="tags-toggle" class="hidden"></button>
 </div>
+
+<div id="home" class="hidden"></div>
+<div id="view-title" class="hidden"></div>
 
 <div id="loading"><div class="spinner"></div><p>טוען תוספים...</p></div>
 <div id="error" class="hidden"><span class="icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#8a3010" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span><p id="error-msg"></p></div>
@@ -688,6 +801,22 @@
   let installedVersionByName = new Map();   // שם → גרסה מותקנת
   let activeTag = 'all';
   let appVersion = null;       // גרסת אוצריא המותקנת, לסינון תאימות
+
+  // ── מצב תצוגה (אצירה) ──
+  // storeHome — תשובת /api/plugins/store-home (null אם נכשלה: נופלים ל"כל התוספים").
+  // currentView — 'home' (דף בית אצור) | 'all' (הרשימה המלאה) | 'category' (slug+name).
+  // searchQuery — חיפוש פעיל גובר על התצוגה ומציג תוצאות מהחיפוש החכם בשרת.
+  let storeHome = null;
+  let currentView = { type: 'home' };
+  let searchQuery = '';
+  let searchTimer = null;
+  let searchSeq = 0;                 // מונע תוצאות חיפוש ישנות מלדרוס חדשות
+  let categoryCache = new Map();     // slug → תשובת ה-API של הקטגוריה
+
+  // סוויץ' "הסתר מותקנים" — הבחירה נשמרת בין הפעלות (localStorage, כמו KNOWN_KEY)
+  const HIDE_INSTALLED_KEY = 'otzaria_store_hide_installed';
+  let hideInstalled = false;
+  try { hideInstalled = localStorage.getItem(HIDE_INSTALLED_KEY) === '1'; } catch {}
 
   const statusLabel = { stable: 'יציב', beta: 'בטא', experimental: 'ניסיוני' };
   const statusClass = { stable: 'badge-stable', beta: 'badge-beta', experimental: 'badge-experimental' };
@@ -873,15 +1002,17 @@
 
   async function reload() {
     refreshBtn.classList.add('spinning');
-    hide('grid'); hide('empty'); hide('error');
+    hide('grid'); hide('empty'); hide('error'); hide('home'); hide('view-title');
     show('loading');
     allPlugins = [];
     installedPlugins = [];
     installedVersionByName = new Map();
     try {
-      const [fetchRes, installedRes] = await Promise.all([
+      const [fetchRes, installedRes, homeRes] = await Promise.all([
         Otzaria.call('network.fetch', { url: API }),
         Otzaria.call('plugin.listInstalled', {}),
+        // דף הבית האצור — כשל בו אינו מפיל את החנות (נופלים ל"כל התוספים")
+        Otzaria.call('network.fetch', { url: BASE + '/api/plugins/store-home' }).catch(() => null),
       ]);
       if (!fetchRes.success) throw new Error(fetchRes.error?.message || 'שגיאת רשת');
       if (fetchRes.data.status !== 200) throw new Error(`HTTP ${fetchRes.data.status}`);
@@ -894,9 +1025,16 @@
         installedPlugins = installedRes.data;
         installedPlugins.forEach(p => installedVersionByName.set(p.name, p.version));
       }
+      storeHome = null;
+      if (homeRes && homeRes.success && homeRes.data.status === 200) {
+        try { storeHome = JSON.parse(homeRes.data.body); } catch { /* נופלים ל"כל התוספים" */ }
+      }
+      categoryCache = new Map();
+      // אצירה ריקה או כשל בטעינתה → ברירת המחדל היא הרשימה המלאה
+      if (currentView.type === 'home' && !hasCuratedHome()) currentView = { type: 'all' };
       initTags();
-      render();
-      show('grid');
+      initCatsBar();
+      renderCurrentView();
       hide('new-toast');
       checkNewPlugins();
       const updates = getAvailableUpdates();
@@ -982,6 +1120,265 @@
     await reload();
   }
 
+  // ── מנוע התצוגות: דף בית אצור / קטגוריה / כל התוספים / חיפוש ──────
+
+  // "לא מותקן או שיש לו עדכון" — הבסיס לסוויץ' "הסתר מותקנים".
+  function isVisibleInStore(p) {
+    const inst = installedVersionByName.get(p.name);
+    return inst === undefined || compareVersions(p.version, inst) > 0;
+  }
+
+  // מסנן אחיד לכל התצוגות: כשהסוויץ' דולק — מותקנים (ללא עדכון) מוסתרים;
+  // כשכבוי — מוצגים עם כפתור במצב "מותקן ✓" / "עדכון".
+  function applyInstalledFilter(list) {
+    return hideInstalled ? list.filter(isVisibleInStore) : list;
+  }
+
+  // מצב ההתקנה של תוסף אצל המשתמש: 'not_installed' | 'update' | 'installed'
+  function installStateOf(p) {
+    const inst = installedVersionByName.get(p.name);
+    if (inst === undefined) return 'not_installed';
+    return compareVersions(p.version, inst) > 0 ? 'update' : 'installed';
+  }
+
+  // ממפה רשימת תוספים מה-API (נבחרים/קטגוריה/חיפוש) לעצמים מהקטלוג המקומי —
+  // כך נשמרים סינון התאימות (toEffectivePlugin) והסדר, ומוחל סוויץ' "הסתר מותקנים".
+  function toCatalogList(list) {
+    const byId = new Map(allPlugins.map(p => [p.id, p]));
+    return applyInstalledFilter((list || []).map(x => byId.get(x.id)).filter(Boolean));
+  }
+
+  // יש מה להציג בדף הבית האצור? (נבחרים או שורת קטגוריה עם תוכן בפועל)
+  function hasCuratedHome() {
+    if (!storeHome) return false;
+    if (toCatalogList(storeHome.featured).length) return true;
+    return (storeHome.categories || []).some(c => c.showOnHome && toCatalogList(c.plugins).length);
+  }
+
+  function clearSearch() {
+    searchQuery = '';
+    searchSeq++;
+    clearTimeout(searchTimer);
+    document.getElementById('search').value = '';
+  }
+
+  // ── סרגל הקטגוריות ──
+  function makeCatChip(label, key, onClick) {
+    const btn = document.createElement('button');
+    btn.className = 'cat-chip';
+    btn.dataset.key = key;
+    btn.textContent = label;
+    btn.onclick = onClick;
+    return btn;
+  }
+
+  function initCatsBar() {
+    const bar = document.getElementById('cats-bar');
+    bar.innerHTML = '';
+    const cats = storeHome ? (storeHome.categories || []) : [];
+    if (!cats.length) { hide('cats-bar'); return; }
+
+    if (hasCuratedHome()) {
+      bar.appendChild(makeCatChip('בית', 'home', () => {
+        clearSearch();
+        currentView = { type: 'home' };
+        renderCurrentView();
+      }));
+    }
+    cats.forEach(c => {
+      const chip = makeCatChip(c.name, 'cat:' + c.slug, () => {
+        clearSearch();
+        currentView = { type: 'category', slug: c.slug, name: c.name };
+        renderCurrentView();
+      });
+      const count = document.createElement('span');
+      count.className = 'chip-count';
+      count.textContent = `(${c.pluginCount})`;
+      chip.appendChild(count);
+      bar.appendChild(chip);
+    });
+    // "כל התוספים" — מוצא אחרון, מוצנע בסוף השורה
+    const all = makeCatChip(`כל התוספים (${storeHome.totalPublicPlugins || allPlugins.length})`, 'all', () => {
+      clearSearch();
+      currentView = { type: 'all' };
+      renderCurrentView();
+    });
+    all.classList.add('all-chip');
+    bar.appendChild(all);
+    show('cats-bar');
+  }
+
+  function updateCatsBarActive() {
+    const key = searchQuery ? ''
+      : currentView.type === 'home' ? 'home'
+      : currentView.type === 'all' ? 'all'
+      : 'cat:' + currentView.slug;
+    document.querySelectorAll('.cat-chip').forEach(b => b.classList.toggle('active', b.dataset.key === key));
+  }
+
+  // ── ניתוב תצוגה ──
+  function renderCurrentView() {
+    hide('detail-page');
+    show('filters');
+    document.getElementById('plugin-count').textContent = `${allPlugins.length} תוספים`;
+    if (storeHome && (storeHome.categories || []).length) show('cats-bar'); else hide('cats-bar');
+    updateCatsBarActive();
+
+    if (searchQuery) {
+      hide('home'); hide('tags-wrap');
+      renderSearch();
+      return;
+    }
+    hide('view-title');
+    if (currentView.type === 'home') {
+      hide('tags-wrap'); hide('grid'); hide('empty');
+      renderHome();
+    } else if (currentView.type === 'category') {
+      hide('tags-wrap'); hide('home');
+      renderCategory();
+    } else {
+      hide('home');
+      document.getElementById('tags-wrap').classList.remove('hidden');
+      updateTagsToggle();
+      render();
+    }
+  }
+
+  function setViewTitle(title, sub) {
+    const el = document.getElementById('view-title');
+    if (!title) { hide('view-title'); return; }
+    el.innerHTML = `<h2>${esc(title)}</h2>${sub ? `<p>${esc(sub)}</p>` : ''}`;
+    show('view-title');
+  }
+
+  function fillGrid(list) {
+    const grid = document.getElementById('grid');
+    grid.innerHTML = '';
+    if (!list.length) { show('empty'); hide('grid'); return; }
+    hide('empty'); show('grid');
+    list.forEach(p => grid.appendChild(makeCard(p)));
+  }
+
+  // ── דף הבית האצור ──
+  function renderHome() {
+    const home = document.getElementById('home');
+    home.innerHTML = '';
+
+    const featured = toCatalogList(storeHome.featured);
+    if (featured.length) {
+      const sec = document.createElement('section');
+      sec.innerHTML = `<div class="home-section-head"><div><div class="home-section-title">תוספים נבחרים</div></div></div>`;
+      const grid = document.createElement('div');
+      grid.className = 'home-grid';
+      featured.forEach(p => grid.appendChild(makeCard(p)));
+      sec.appendChild(grid);
+      home.appendChild(sec);
+    }
+
+    (storeHome.categories || []).filter(c => c.showOnHome).forEach(c => {
+      const plugins = toCatalogList(c.plugins);
+      if (!plugins.length) return;
+      const sec = document.createElement('section');
+      const head = document.createElement('div');
+      head.className = 'home-section-head';
+      head.innerHTML = `
+        <div>
+          <div class="home-section-title">${esc(c.name)}</div>
+          ${c.description ? `<div class="home-section-desc">${esc(c.description)}</div>` : ''}
+        </div>
+        <button class="home-see-all">לכל הקטגוריה (${c.pluginCount}) ←</button>`;
+      head.querySelector('.home-see-all').onclick = () => {
+        currentView = { type: 'category', slug: c.slug, name: c.name };
+        renderCurrentView();
+      };
+      const row = document.createElement('div');
+      row.className = 'home-row';
+      plugins.forEach(p => row.appendChild(makeCard(p)));
+      sec.appendChild(head);
+      sec.appendChild(row);
+      home.appendChild(sec);
+    });
+
+    // פס גילוי מוצנע אל הרשימה המלאה
+    const strip = document.createElement('div');
+    strip.className = 'home-footer-strip';
+    strip.innerHTML = `לא מצאתם את מה שחיפשתם? <button>עיינו בכל התוספים (${storeHome.totalPublicPlugins || allPlugins.length}) ←</button>`;
+    strip.querySelector('button').onclick = () => {
+      currentView = { type: 'all' };
+      renderCurrentView();
+    };
+    home.appendChild(strip);
+
+    show('home');
+  }
+
+  // ── דף קטגוריה ──
+  async function renderCategory() {
+    const { slug, name } = currentView;
+    setViewTitle(name || 'קטגוריה', '');
+    if (!categoryCache.has(slug)) {
+      show('loading'); hide('grid'); hide('empty');
+      try {
+        const res = await apiFetch(`${API}/categories/${encodeURIComponent(slug)}`);
+        if (res.status !== 200) throw new Error(`HTTP ${res.status}`);
+        categoryCache.set(slug, JSON.parse(res.body));
+      } catch {
+        hide('loading');
+        setViewTitle(name || 'קטגוריה', 'שגיאה בטעינת הקטגוריה — נסו לרענן');
+        fillGrid([]);
+        return;
+      }
+      hide('loading');
+      // בזמן הטעינה המשתמש אולי עבר לתצוגה אחרת
+      if (searchQuery || currentView.type !== 'category' || currentView.slug !== slug) return;
+    }
+    const cat = categoryCache.get(slug);
+    setViewTitle(cat.name, cat.description || '');
+    fillGrid(toCatalogList(cat.plugins));
+  }
+
+  // ── חיפוש חכם מהשרת (עם fallback לסינון מקומי) ──
+  async function renderSearch() {
+    const q = searchQuery;
+    const seq = ++searchSeq;
+    hide('view-title'); hide('grid'); hide('empty');
+    show('loading');
+
+    let list = null;
+    let relaxed = false;
+    try {
+      const status = document.getElementById('status-filter').value;
+      const url = `${API}/search?q=${encodeURIComponent(q)}&limit=50${status !== 'all' ? `&status=${encodeURIComponent(status)}` : ''}`;
+      const res = await apiFetch(url);
+      if (res.status === 200) {
+        const data = JSON.parse(res.body);
+        list = toCatalogList(data.results);
+        relaxed = data.relaxed === true;
+      }
+    } catch { /* fallback לסינון מקומי */ }
+
+    // תשובה ישנה או שהקלט השתנה בינתיים — נזרקת
+    if (seq !== searchSeq || q !== searchQuery) return;
+    hide('loading');
+
+    if (list === null) {
+      // fallback מקומי — אותה התנהגות כמו חיפוש השרת, כולל סוויץ' "הסתר מותקנים"
+      const ql = q.toLowerCase();
+      const status = document.getElementById('status-filter').value;
+      list = applyInstalledFilter(allPlugins).filter(p => {
+        if (status !== 'all' && p.status !== status) return false;
+        const hay = [p.name, p.shortDescription, p.description, ...(p.tags || [])].join(' ').toLowerCase();
+        return hay.includes(ql);
+      });
+    }
+
+    setViewTitle(
+      list.length ? `נמצאו ${list.length} תוצאות עבור „${q}"` : '',
+      relaxed ? 'לא נמצאו התאמות מדויקות — מוצגות תוצאות קרובות' : ''
+    );
+    fillGrid(list);
+  }
+
   // ── תגיות ────────────────────────────────────────────────────────
   function initTags() {
     const tagSet = new Set();
@@ -1056,23 +1453,14 @@
     return btn;
   }
 
-  // ── רינדור רשת כרטיסים ──────────────────────────────────────────
+  // ── רינדור "כל התוספים" (הרשימה המלאה עם סינון תגית/סטטוס) ────────
+  // חיפוש טקסט אינו מטופל כאן — searchQuery פעיל מנותב ל-renderSearch (חיפוש שרת).
   function render() {
-    const q = document.getElementById('search').value.toLowerCase();
     const status = document.getElementById('status-filter').value;
 
-    const list = allPlugins.filter(p => {
-      // תוסף מותקן יוצג רק אם בחנות יש גרסה חדשה ממנו (עדכון). גרסה זהה או
-      // ישנה יותר — מסתירים. תוסף שאינו מותקן — מוצג תמיד.
-      const inst = installedVersionByName.get(p.name);
-      return inst === undefined || compareVersions(p.version, inst) > 0;
-    }).filter(p => {
+    const list = applyInstalledFilter(allPlugins).filter(p => {
       if (status !== 'all' && p.status !== status) return false;
       if (activeTag !== 'all' && !(p.tags || []).includes(activeTag)) return false;
-      if (q) {
-        const hay = [p.name, p.shortDescription, p.description, ...(p.tags || [])].join(' ').toLowerCase();
-        if (!hay.includes(q)) return false;
-      }
       return true;
     });
 
@@ -1081,12 +1469,7 @@
       ? `${allPlugins.length} תוספים`
       : `${list.length} מתוך ${allPlugins.length}`;
 
-    const grid = document.getElementById('grid');
-    grid.innerHTML = '';
-
-    if (list.length === 0) { show('empty'); hide('grid'); return; }
-    hide('empty'); show('grid');
-    list.forEach(p => grid.appendChild(makeCard(p)));
+    fillGrid(list);
   }
 
   function makeCard(p) {
@@ -1111,7 +1494,7 @@
           ? `<div class="card-tags">${p.tags.slice(0,4).map(t => `<span class="card-tag">${esc(t)}</span>`).join('')}</div>`
           : ''}
         <div class="card-actions">
-          <button class="btn btn-primary install-btn" data-url="${esc(downloadUrl)}">התקנה</button>
+          ${installButtonHtml(p, downloadUrl, 'btn btn-primary install-btn')}
         </div>
       </div>`;
 
@@ -1125,17 +1508,15 @@
 
   // ── דף פרטים ────────────────────────────────────────────────────
   function showDetailPage() {
-    hide('filters'); hide('tags-wrap'); hide('grid'); hide('empty'); hide('loading'); hide('error');
+    hide('filters'); hide('cats-bar'); hide('tags-wrap'); hide('home'); hide('view-title');
+    hide('grid'); hide('empty'); hide('loading'); hide('error');
     document.getElementById('plugin-count').textContent = '';
     show('detail-page');
   }
 
+  // חזרה מדף פרטים — אל התצוגה שממנה הגיע המשתמש (בית/קטגוריה/הכול/חיפוש)
   function showListPage() {
-    hide('detail-page');
-    show('filters');
-    document.getElementById('tags-wrap').classList.remove('hidden');
-    updateTagsToggle();
-    render();
+    renderCurrentView();
   }
 
   function showDetail(p) {
@@ -1160,7 +1541,7 @@
           </div>
           <div class="detail-desc">${esc(p.description || p.shortDescription || '')}</div>
           <div class="detail-actions">
-            <button class="detail-install-btn" id="detail-install-btn" data-url="${esc(downloadUrl)}">התקנה</button>
+            ${installButtonHtml(p, downloadUrl, 'detail-install-btn')}
           </div>
         </div>
       </div>
@@ -1223,18 +1604,23 @@
 
     document.getElementById('back-btn').onclick = showListPage;
 
-    document.getElementById('detail-install-btn').addEventListener('click', (e) => {
-      installPluginTracked(e.currentTarget, e.currentTarget.dataset.url);
-    });
+    const detailInstallBtn = detail.querySelector('.detail-install-btn[data-url]');
+    if (detailInstallBtn) {
+      detailInstallBtn.addEventListener('click', (e) => {
+        installPluginTracked(e.currentTarget, e.currentTarget.dataset.url);
+      });
+    }
 
     detail.querySelectorAll('.detail-tag').forEach(tagEl => {
       tagEl.addEventListener('click', () => {
-        showListPage();
+        // לחיצה על תגית → תצוגת "כל התוספים" מסוננת לפי התגית
+        clearSearch();
+        currentView = { type: 'all' };
         activeTag = tagEl.dataset.tag;
         document.querySelectorAll('.tag-btn').forEach(b => {
           b.classList.toggle('active', b.dataset.value === activeTag);
         });
-        render();
+        renderCurrentView();
       });
     });
 
@@ -1244,6 +1630,17 @@
         show('lightbox');
       });
     });
+  }
+
+  // כפתור התקנה לפי מצב: מותקן ועדכני → "מותקן ✓" מנוטרל; מותקן עם גרסה
+  // חדשה בחנות → "עדכון"; לא מותקן → "התקנה".
+  function installButtonHtml(p, downloadUrl, className) {
+    const state = installStateOf(p);
+    if (state === 'installed') {
+      return `<button class="${className}" disabled>מותקן ✓</button>`;
+    }
+    const label = state === 'update' ? 'עדכון' : 'התקנה';
+    return `<button class="${className}" data-url="${esc(downloadUrl)}">${label}</button>`;
   }
 
   // ── כלים ─────────────────────────────────────────────────────────
@@ -1357,13 +1754,40 @@
     installPluginTracked(btn, btn.dataset.url);
   });
 
+  // כפתורי התקנה גם בכרטיסי דף הבית האצור (נבחרים ושורות קטגוריה)
+  document.getElementById('home').addEventListener('click', (e) => {
+    const btn = e.target.closest('.install-btn');
+    if (!btn) return;
+    installPluginTracked(btn, btn.dataset.url);
+  });
+
   document.getElementById('lightbox-close').onclick = () => hide('lightbox');
   document.getElementById('lightbox').addEventListener('click', (e) => {
     if (e.target === e.currentTarget) hide('lightbox');
   });
 
-  document.getElementById('search').addEventListener('input', render);
-  document.getElementById('status-filter').addEventListener('change', render);
+  // חיפוש: debounce קצר ואז חיפוש חכם בשרת; ריקון מחזיר לתצוגה הנוכחית
+  document.getElementById('search').addEventListener('input', (e) => {
+    searchQuery = e.target.value.trim();
+    clearTimeout(searchTimer);
+    if (!searchQuery) {
+      searchSeq++;
+      renderCurrentView();
+      return;
+    }
+    searchTimer = setTimeout(renderCurrentView, 300);
+  });
+  document.getElementById('status-filter').addEventListener('change', renderCurrentView);
+
+  // סוויץ' "הסתר מותקנים" — שמירת הבחירה + רענון; אם דף הבית התרוקן עוברים לרשימה
+  const hideInstalledEl = document.getElementById('hide-installed');
+  hideInstalledEl.checked = hideInstalled;
+  hideInstalledEl.addEventListener('change', () => {
+    hideInstalled = hideInstalledEl.checked;
+    try { localStorage.setItem(HIDE_INSTALLED_KEY, hideInstalled ? '1' : '0'); } catch {}
+    if (currentView.type === 'home' && !hasCuratedHome()) currentView = { type: 'all' };
+    renderCurrentView();
+  });
 
   loadPlugins();
 </script>
