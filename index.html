@@ -918,12 +918,12 @@
           <div class="update-name">${esc(plugin.name)}</div>
           <div class="update-versions">${esc(installed.version)} ← ${esc(plugin.version)}</div>
         </div>
-        <button class="update-btn" data-url="${esc(downloadUrl)}">עדכן</button>`;
+        <button class="update-btn" data-url="${esc(downloadUrl)}" data-update="1">עדכן</button>`;
       list.appendChild(row);
     });
 
     list.querySelectorAll('.update-btn').forEach(btn => {
-      btn.addEventListener('click', () => installPluginTracked(btn, btn.dataset.url));
+      btn.addEventListener('click', () => installPluginTracked(btn, btn.dataset.url, true));
     });
 
     const updateAllBtn = document.getElementById('update-all-btn');
@@ -934,7 +934,7 @@
       updateAllBtn.textContent = 'מעדכן...';
       const btns = list.querySelectorAll('.update-btn:not(:disabled)');
       for (const btn of btns) {
-        await installPluginTracked(btn, btn.dataset.url);
+        await installPluginTracked(btn, btn.dataset.url, true);
       }
       updateAllBtn.textContent = 'הושלם ✓';
     };
@@ -1607,7 +1607,7 @@
     const detailInstallBtn = detail.querySelector('.detail-install-btn[data-url]');
     if (detailInstallBtn) {
       detailInstallBtn.addEventListener('click', (e) => {
-        installPluginTracked(e.currentTarget, e.currentTarget.dataset.url);
+        installPluginTracked(e.currentTarget, e.currentTarget.dataset.url, e.currentTarget.dataset.update === '1');
       });
     }
 
@@ -1640,7 +1640,7 @@
       return `<button class="${className}" disabled>מותקן ✓</button>`;
     }
     const label = state === 'update' ? 'עדכון' : 'התקנה';
-    return `<button class="${className}" data-url="${esc(downloadUrl)}">${label}</button>`;
+    return `<button class="${className}" data-url="${esc(downloadUrl)}"${state === 'update' ? ' data-update="1"' : ''}>${label}</button>`;
   }
 
   // ── כלים ─────────────────────────────────────────────────────────
@@ -1684,13 +1684,27 @@
     return res.data;
   }
 
-  // מזהה התוסף בקטלוג לפי כתובת ההורדה שלו (הכפתורים נושאים רק data-url).
-  function pluginIdByDownloadUrl(downloadUrl) {
-    const p = allPlugins.find(p => {
+  // מאתר את התוסף בקטלוג לפי כתובת ההורדה שלו (הכפתורים נושאים רק data-url).
+  function pluginByDownloadUrl(downloadUrl) {
+    return allPlugins.find(p => {
       const u = p.downloadUrl.startsWith('http') ? p.downloadUrl : BASE + p.downloadUrl;
       return u === downloadUrl;
-    });
+    }) || null;
+  }
+
+  function pluginIdByDownloadUrl(downloadUrl) {
+    const p = pluginByDownloadUrl(downloadUrl);
     return p ? p.id : null;
+  }
+
+  // רישום התקנה/עדכון שהצליחו במפת המותקנים — כדי שכרטיסים אחרים ומעבר בין
+  // תצוגות ישקפו מיד "מותקן ✓", בלי להמתין לרענון מלא של החנות.
+  function markInstalled(plugin) {
+    if (!plugin) return;
+    installedVersionByName.set(plugin.name, plugin.version);
+    const existing = installedPlugins.find(p => p.name === plugin.name);
+    if (existing) existing.version = plugin.version;
+    else installedPlugins.push({ name: plugin.name, version: plugin.version });
   }
 
   async function createInstallToken(downloadUrl) {
@@ -1719,11 +1733,20 @@
     return 'no_report';
   }
 
-  // התקנה עם מעקב: מציג "מתקין..." עם ספינר לאורך כל ההמתנה, ומעדכן את
-  // הכפתור לפי התוצאה בפועל שדווחה מאוצריא.
-  async function installPluginTracked(btn, downloadUrl) {
+  // התקנה/עדכון עם מעקב: מציג ספינר לאורך ההמתנה ומעדכן את הכפתור לפי
+  // התוצאה שדווחה מאוצריא. הניסוח מותאם לפעולה — עדכון תוסף מותקן אינו
+  // "התקנה". isUpdate נמסר מהקורא; אם לא — נגזר ממצב ההתקנה בפועל.
+  async function installPluginTracked(btn, downloadUrl, isUpdate) {
+    const plugin = pluginByDownloadUrl(downloadUrl);
+    const updating = isUpdate !== undefined
+      ? isUpdate
+      : Boolean(plugin && installStateOf(plugin) === 'update');
+    const words = updating
+      ? { progress: 'מעדכן...', success: 'עודכן בהצלחה!', failure: 'העדכון נכשל - לחץ שוב לנסיון נוסף' }
+      : { progress: 'מתקין...', success: 'הותקן בהצלחה!', failure: 'ההתקנה נכשלה - לחץ שוב לנסיון נוסף' };
+
     btn.disabled = true;
-    btn.innerHTML = '<span class="btn-spinner"></span>מתקין...';
+    btn.innerHTML = `<span class="btn-spinner"></span>${words.progress}`;
     const token = await createInstallToken(downloadUrl);
     try {
       await Otzaria.call('plugin.requestInstall', {
@@ -1735,14 +1758,16 @@
       btn.textContent = 'שגיאה';
       return;
     }
+    // ללא טוקן אין מעקב — לא מסמנים כמותקן כדי לא להצהיר על תוצאה שאינה ידועה
     if (!token) { btn.textContent = 'נשלח ✓'; return; }
 
     const result = await waitForInstallResult(token);
     if (result === 'success') {
-      btn.textContent = 'הותקן בהצלחה!';
+      btn.textContent = words.success;
+      markInstalled(plugin);
     } else if (result === 'failure') {
       btn.disabled = false;
-      btn.textContent = 'ההתקנה נכשלה - לחץ שוב לנסיון נוסף';
+      btn.textContent = words.failure;
     } else {
       btn.textContent = 'נשלח ✓';
     }
@@ -1751,14 +1776,14 @@
   document.getElementById('grid').addEventListener('click', (e) => {
     const btn = e.target.closest('.install-btn');
     if (!btn) return;
-    installPluginTracked(btn, btn.dataset.url);
+    installPluginTracked(btn, btn.dataset.url, btn.dataset.update === '1');
   });
 
   // כפתורי התקנה גם בכרטיסי דף הבית האצור (נבחרים ושורות קטגוריה)
   document.getElementById('home').addEventListener('click', (e) => {
     const btn = e.target.closest('.install-btn');
     if (!btn) return;
-    installPluginTracked(btn, btn.dataset.url);
+    installPluginTracked(btn, btn.dataset.url, btn.dataset.update === '1');
   });
 
   document.getElementById('lightbox-close').onclick = () => hide('lightbox');
