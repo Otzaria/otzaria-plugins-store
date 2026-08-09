@@ -813,10 +813,23 @@
   let searchSeq = 0;                 // מונע תוצאות חיפוש ישנות מלדרוס חדשות
   let categoryCache = new Map();     // slug → תשובת ה-API של הקטגוריה
 
-  // סוויץ' "הסתר מותקנים" — הבחירה נשמרת בין הפעלות (localStorage, כמו KNOWN_KEY)
+  // סוויץ' "הסתר מותקנים" — הבחירה נשמרת בין הפעלות. localStorage לא תמיד
+  // שורד סגירה של ה-webview, לכן שומרים גם דרך אחסון התוסף של ה-SDK
+  // (הרשאות plugin.storage.read/write); localStorage נשאר כגיבוי מקומי מהיר.
   const HIDE_INSTALLED_KEY = 'otzaria_store_hide_installed';
   let hideInstalled = false;
   try { hideInstalled = localStorage.getItem(HIDE_INSTALLED_KEY) === '1'; } catch {}
+
+  // storage.get/set — אחסון KV של התוסף (עטיפת { success, data }, זמין מ-0.9.89).
+  async function persistentGet(key) {
+    try {
+      const res = await Otzaria.call('storage.get', { key });
+      return (res && res.success) ? res.data : null;
+    } catch { return null; }
+  }
+  async function persistentSet(key, value) {
+    try { await Otzaria.call('storage.set', { key, value }); } catch {}
+  }
 
   const statusLabel = { stable: 'יציב', beta: 'בטא', experimental: 'ניסיוני' };
   const statusClass = { stable: 'badge-stable', beta: 'badge-beta', experimental: 'badge-experimental' };
@@ -1117,6 +1130,14 @@
       const info = await Otzaria.call('app.getInfo', {});
       if (info && info.success) appVersion = info.data.version;
     } catch {}
+    // שחזור "הסתר מותקנים" מאחסון התוסף (storage.get שורד בין פתיחות,
+    // בניגוד ל-localStorage שמתאפס עם ה-webview) — לפני הרינדור הראשון.
+    const saved = await persistentGet(HIDE_INSTALLED_KEY);
+    if (saved !== null && saved !== undefined) {
+      hideInstalled = saved === true || saved === '1';
+      hideInstalledEl.checked = hideInstalled;
+      try { localStorage.setItem(HIDE_INSTALLED_KEY, hideInstalled ? '1' : '0'); } catch {}
+    }
     await reload();
   }
 
@@ -1810,6 +1831,7 @@
   hideInstalledEl.addEventListener('change', () => {
     hideInstalled = hideInstalledEl.checked;
     try { localStorage.setItem(HIDE_INSTALLED_KEY, hideInstalled ? '1' : '0'); } catch {}
+    persistentSet(HIDE_INSTALLED_KEY, hideInstalled);
     if (currentView.type === 'home' && !hasCuratedHome()) currentView = { type: 'all' };
     renderCurrentView();
   });
