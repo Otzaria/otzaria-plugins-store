@@ -68,9 +68,12 @@
   async function checkAndNotify(payload) {
     const appVersion = payload && payload.app ? payload.app.version : null;
 
-    // משיכת הקטלוג ורשימת המותקנים במקביל
+    // משיכת הקטלוג ורשימת המותקנים במקביל. הקטלוג נמשך עם גרסת אוצריא, כך שהשרת
+    // מחזיר כל תוסף בגרסה התואמת ומשמיט תוספים ללא גרסה תואמת; toEffectivePlugin
+    // למטה חוזר על אותה בחירה מקומית, לגיבוי מול אתר שאינו מכיר את הפרמטר.
+    const catalogUrl = appVersion ? `${API}?appVersion=${encodeURIComponent(appVersion)}` : API;
     const [fetchRes, installedRes] = await Promise.all([
-      Otzaria.call('network.fetch', { url: API }),
+      Otzaria.call('network.fetch', { url: catalogUrl }),
       Otzaria.call('plugin.listInstalled', {}),
     ]);
     if (!fetchRes.success || fetchRes.data.status !== 200) return;

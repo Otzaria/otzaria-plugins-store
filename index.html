@@ -848,6 +848,11 @@
   }
 
   // ── בחירת הגרסה התואמת ─────────────────────────────────────────────
+  // עובד בשני רבדים: כל קריאה ל-API נשלחת עם appVersion (ראו withAppVersion),
+  // והשרת מחזיר כבר את הגרסה התואמת ומשמיט תוספים ללא גרסה תואמת; ובנוסף אותה
+  // בחירה מתבצעת גם כאן על התשובה. הכפילות מכוונת: מול אתר ותיק שאינו מכיר את
+  // הפרמטר החנות ממשיכה לעבוד נכון, והחישוב זהה ולכן אין סתירה בין השניים.
+  //
   // גרסה (חיה או היסטורית) תואמת רק אם גרסת אוצריא בטווח [compatibleWith, maxAppVersion].
   // כשגרסת אוצריא אינה ידועה (כשל ב-app.getInfo) — לא מסתירים דבר.
   function isVersionCompatible(v, appVer) {
@@ -878,6 +883,16 @@
     return pluginVersionCandidates(p)
       .filter(v => isVersionCompatible(v, appVer))
       .sort((a, b) => compareVersions(b.version, a.version))[0] || null;
+  }
+
+  // מוסיף את גרסת אוצריא לכל קריאה ל-API של החנות. השרת מחזיר אז כל תוסף בגרסה
+  // התואמת הגבוהה ביותר, משמיט תוספים ללא גרסה תואמת, ומתקן בהתאם גם את המונים
+  // (pluginCount / totalPublicPlugins / total בחיפוש ובקטגוריה) והעימוד — דבר
+  // שסינון מקומי אחרי הבקשה אינו יכול לעשות. אתר ותיק שאינו מכיר את הפרמטר
+  // מתעלם ממנו, והסינון המקומי כאן מטפל בכל מקרה.
+  function withAppVersion(url) {
+    if (!appVersion) return url;
+    return url + (url.includes('?') ? '&' : '?') + 'appVersion=' + encodeURIComponent(appVersion);
   }
 
   // הגרסה הגבוהה ביותר בכלל (ללא תלות בתאימות) — לזיהוי "קיימת גרסה חדשה יותר".
@@ -1052,10 +1067,10 @@
     installedVersionByName = new Map();
     try {
       const [fetchRes, installedRes, homeRes] = await Promise.all([
-        Otzaria.call('network.fetch', { url: API }),
+        Otzaria.call('network.fetch', { url: withAppVersion(API) }),
         Otzaria.call('plugin.listInstalled', {}),
         // דף הבית האצור — כשל בו אינו מפיל את החנות (נופלים ל"כל התוספים")
-        Otzaria.call('network.fetch', { url: BASE + '/api/plugins/store-home' }).catch(() => null),
+        Otzaria.call('network.fetch', { url: withAppVersion(BASE + '/api/plugins/store-home') }).catch(() => null),
       ]);
       if (!fetchRes.success) throw new Error(fetchRes.error?.message || 'שגיאת רשת');
       if (fetchRes.data.status !== 200) throw new Error(`HTTP ${fetchRes.data.status}`);
@@ -1370,7 +1385,7 @@
     if (!categoryCache.has(slug)) {
       show('loading'); hide('grid'); hide('empty');
       try {
-        const res = await apiFetch(`${API}/categories/${encodeURIComponent(slug)}`);
+        const res = await apiFetch(withAppVersion(`${API}/categories/${encodeURIComponent(slug)}`));
         if (res.status !== 200) throw new Error(`HTTP ${res.status}`);
         categoryCache.set(slug, JSON.parse(res.body));
       } catch {
@@ -1400,7 +1415,7 @@
     try {
       const status = document.getElementById('status-filter').value;
       const url = `${API}/search?q=${encodeURIComponent(q)}&limit=50${status !== 'all' ? `&status=${encodeURIComponent(status)}` : ''}`;
-      const res = await apiFetch(url);
+      const res = await apiFetch(withAppVersion(url));
       if (res.status === 200) {
         const data = JSON.parse(res.body);
         list = toCatalogList(data.results);
