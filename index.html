@@ -867,6 +867,7 @@
       compatibleWith: p.compatibleWith,
       maxAppVersion: p.maxAppVersion,
       requiresNetwork: p.requiresNetwork,
+      pluginFileSize: p.pluginFileSize,
       downloadUrl: p.downloadUrl,
       isLatest: true,
     }];
@@ -900,6 +901,9 @@
       compatibleWith: best.compatibleWith,
       maxAppVersion: best.maxAppVersion,
       requiresNetwork: best.requiresNetwork ?? p.requiresNetwork,
+      // גודל הקובץ של הגרסה המוצגת. קיים ב-versions של ה-API הנוכחי; ה-fallback
+      // לשדה העליון (API עתידי) ול-0 שומר תאימות מלאה ל-API ישן שאין בו גודל כלל.
+      pluginFileSize: best.pluginFileSize ?? p.pluginFileSize ?? 0,
       downloadUrl: best.downloadUrl || p.downloadUrl,
       // קיימת גרסה חדשה יותר שאינה תואמת לגרסת אוצריא הנוכחית של המשתמש
       newerIncompatibleVersion: latest && compareVersions(latest.version, best.version) > 0
@@ -1582,6 +1586,11 @@
               <div class="info-label">הורדות</div>
               <div class="info-value">${fmtNum(p.downloadCount)}</div>
             </div>
+            ${p.pluginFileSize > 0 ? `
+            <div class="info-cell">
+              <div class="info-label">גודל</div>
+              <div class="info-value">${fmtSize(p.pluginFileSize)}</div>
+            </div>` : ''}
             ${p.author ? `
             <div class="info-cell">
               <div class="info-label">מפתח</div>
@@ -1670,6 +1679,14 @@
 
   function fmtNum(n) {
     return (Number(n) || 0).toLocaleString('he-IL');
+  }
+
+  // גודל קובץ בתצוגה ידידותית (B/KB/MB)
+  function fmtSize(bytes) {
+    const n = Number(bytes) || 0;
+    if (n < 1024) return `${n} B`;
+    if (n < 1024 * 1024) return `${(n / 1024).toLocaleString('he-IL', { maximumFractionDigits: 0 })} KB`;
+    return `${(n / (1024 * 1024)).toLocaleString('he-IL', { maximumFractionDigits: 1 })} MB`;
   }
 
   // תגית כמות הורדות. מוצגת תמיד (גם 0), כדי לשמור על מראה אחיד עם האתר.
