@@ -939,8 +939,23 @@
       list.appendChild(row);
     });
 
+    // שורה שהעדכון בה הצליח יורדת מהרשימה; כשהרשימה מתרוקנת החלונית נסגרת,
+    // כדי שלא תישאר פתוחה עם רשימה שכבר אינה רלוונטית.
+    function settleRow(row, result) {
+      if (result !== 'success') return;
+      setTimeout(() => {
+        row.remove();
+        if (!list.querySelector('.update-row')) hide('updates-backdrop');
+        else document.getElementById('updates-title').textContent =
+          `עדכונים זמינים (${list.querySelectorAll('.update-row').length})`;
+      }, 900);
+    }
+
     list.querySelectorAll('.update-btn').forEach(btn => {
-      btn.addEventListener('click', () => installPluginTracked(btn, btn.dataset.url, true));
+      btn.addEventListener('click', async () => {
+        const result = await installPluginTracked(btn, btn.dataset.url, true);
+        settleRow(btn.closest('.update-row'), result);
+      });
     });
 
     const updateAllBtn = document.getElementById('update-all-btn');
@@ -949,11 +964,22 @@
     updateAllBtn.onclick = async () => {
       updateAllBtn.disabled = true;
       updateAllBtn.textContent = 'מעדכן...';
-      const btns = list.querySelectorAll('.update-btn:not(:disabled)');
+      const btns = [...list.querySelectorAll('.update-btn:not(:disabled)')];
+      const results = [];
       for (const btn of btns) {
-        await installPluginTracked(btn, btn.dataset.url, true);
+        const result = await installPluginTracked(btn, btn.dataset.url, true);
+        results.push(result);
+        settleRow(btn.closest('.update-row'), result);   // מוריד מהרשימה מה שהצליח
       }
       updateAllBtn.textContent = 'הושלם ✓';
+      // כל העדכונים הצליחו — סוגרים את החלונית אחרי רגע קצר של משוב.
+      // אם משהו נכשל/לא דווח, משאירים פתוח כדי שיהיה אפשר לנסות שוב.
+      if (results.length && results.every(r => r === 'success')) {
+        setTimeout(() => hide('updates-backdrop'), 900);
+      } else if (results.some(r => r !== 'success')) {
+        updateAllBtn.disabled = false;
+        updateAllBtn.textContent = 'נסה שוב את מה שנכשל';
+      }
     };
 
     show('updates-backdrop');
@@ -1794,10 +1820,10 @@
     } catch (err) {
       btn.disabled = false;
       btn.textContent = 'שגיאה';
-      return;
+      return 'failure';
     }
     // ללא טוקן אין מעקב — לא מסמנים כמותקן כדי לא להצהיר על תוצאה שאינה ידועה
-    if (!token) { btn.textContent = 'נשלח ✓'; return; }
+    if (!token) { btn.textContent = 'נשלח ✓'; return 'no_report'; }
 
     const result = await waitForInstallResult(token);
     if (result === 'success') {
@@ -1809,6 +1835,7 @@
     } else {
       btn.textContent = 'נשלח ✓';
     }
+    return result;
   }
 
   document.getElementById('grid').addEventListener('click', (e) => {
