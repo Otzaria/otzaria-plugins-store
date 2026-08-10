@@ -127,6 +127,10 @@
       await checkAndNotify(payload);
     } catch {
       // כשל ברקע (רשת/JSON) — שקט, לא מטרידים את המשתמש בעליית האפליקציה
+    } finally {
+      // העבודה חד-פעמית — מכריזים סיום ואוצריא מכבה את מופע הרקע מיד
+      // (0.9.97+; בגרסאות ישנות הקריאה נכשלת בשקט וה-catch בולע אותה).
+      try { await Otzaria.call('plugin.backgroundDone'); } catch {}
     }
   });
 </script>
