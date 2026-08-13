@@ -4,6 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>חנות תוספים</title>
+  <!-- מילוני התרגום מוטמעים בתוסף (ללא רשת). שפה ללא מילון נשארת בעברית. -->
+  <script src="i18n/en.js"></script>
   <style>
     /* ── טוקני עיצוב (ערכים זהים למקור) ── */
     :root {
@@ -11,6 +13,8 @@
       --color-surface-card: #fff;
       --color-surface-soft: #faf7f3;
       --color-surface-muted: #f0ece8;
+      /* רקע פס הכותרת — surfaceContainerHigh של אוצריא (ראה applyTheme) */
+      --color-surface-container-high: #f0e9df;
       --color-on-surface: #2c1b02;
       --color-accent: #2c1b02;
       --color-on-accent: #fff;
@@ -62,30 +66,52 @@
       --color-scrim-dark: rgba(0,0,0,.88);
     }
 
-    html, body {   overflow-x: hidden; }
+    /* פס הכותרת קבוע והתוכן הוא שגולל — לכן העמוד עצמו אינו גולל כלל */
+    html, body { height: 100%; overflow: hidden; }
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
       font-family: var(--font-main);
       background: var(--color-surface);
       color: var(--color-on-surface);
-      direction: rtl;
     }
 
-    /* ── כותרת ── */
-    header {
-      background: var(--color-surface-card);
+    .app-shell { display: flex; flex-direction: column; height: 100%; }
+    .app-content { flex: 1; min-width: 0; overflow-y: auto; overflow-x: hidden; }
+
+    /* ── סרגל כותרת התוסף (Top Bar) ──
+       אוצריא אינה מציירת כותרת מעל ה-WebView, ולכן שם התוסף יושב בפס עליון קבוע
+       ברקע surfaceContainerHigh — אותו צבע וגובה כמו הסרגל העליון של מסכי הספרים.
+       הגדלים כאן ב-px קשיחים בכוונה (יחידות יחסיות היו מתפוצצות עם גופן ספר גדול). */
+    .topbar {
+      background: var(--color-surface-container-high);
       border-bottom: 1px solid var(--color-outline);
-      padding: 12px 20px;
+      height: 56px;
+      padding: 0 16px;
       display: flex;
       align-items: center;
-      gap: 12px;
-      position: sticky;
-      top: 0;
-      z-index: 10;
+      gap: 10px;
+      flex-shrink: 0;
     }
-    header h1 { font-size: var(--fs-18); font-weight: 700; color: var(--color-on-surface); flex: 1; }
-    #plugin-count { font-size: var(--fs-13); color: var(--color-text-muted); }
+    .topbar h1 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--color-on-surface);
+      white-space: nowrap;
+    }
+    #plugin-count {
+      flex: 1;
+      min-width: 0;
+      font-size: 12px;
+      color: var(--color-text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    @media (max-width: 600px) {
+      .topbar { height: 44px; padding: 0 10px; }
+    }
 
     #refresh-btn {
       width: 32px; height: 32px;
@@ -122,7 +148,6 @@
       background: var(--color-surface-soft);
       color: var(--color-on-surface);
       outline: none;
-      direction: rtl;
     }
     #search::placeholder { color: var(--color-text-faint); }
     #search:focus { border-color: var(--color-on-surface); }
@@ -135,7 +160,6 @@
       background: var(--color-surface-soft);
       color: var(--color-on-surface);
       outline: none;
-      direction: rtl;
     }
 
     /* ── סוויץ' "הסתר מותקנים" ── */
@@ -159,17 +183,19 @@
       transition: background .15s;
       flex-shrink: 0;
     }
+    /* מיקום לוגי (inset-inline) — הידית נעה נכון גם ב-rtl וגם ב-ltr */
     #hide-installed-wrap .switch::after {
       content: '';
       position: absolute;
-      top: 2px; right: 2px;
+      top: 2px;
+      inset-inline-start: 2px;
       width: 14px; height: 14px;
       border-radius: 50%;
       background: var(--color-surface-card);
-      transition: transform .15s;
+      transition: inset-inline-start .15s;
     }
     #hide-installed-wrap input:checked + .switch { background: var(--color-accent); }
-    #hide-installed-wrap input:checked + .switch::after { transform: translateX(-16px); }
+    #hide-installed-wrap input:checked + .switch::after { inset-inline-start: 18px; }
 
     /* ── תגיות ── */
     #tags-wrap { background: var(--color-surface-soft); border-bottom: 1px solid var(--color-divider); }
@@ -304,7 +330,7 @@
       border-radius: 50%;
       animation: spin .7s linear infinite;
       vertical-align: -1px;
-      margin-left: 6px;
+      margin-inline-end: 6px;
     }
 
     /* ── מצבים ── */
@@ -594,7 +620,7 @@
     #lightbox-close {
       position: absolute;
       top: 16px;
-      left: 16px;
+      inset-inline-end: 16px;
       background: var(--color-overlay-light);
       border: none;
       color: var(--color-on-scrim);
@@ -618,7 +644,8 @@
       background: var(--color-accent);
       color: var(--color-on-accent);
       border-radius: var(--radius-14);
-      padding: 12px 14px 12px 18px;
+      padding: 12px;
+      padding-inline: 14px 18px;
       display: flex;
       align-items: center;
       gap: 12px;
@@ -725,24 +752,27 @@
 </head>
 <body>
 
-<header>
-  <h1>חנות תוספים</h1>
+<div class="app-shell">
+<header class="topbar">
+  <h1 data-t="חנות תוספים">חנות תוספים</h1>
   <span id="plugin-count"></span>
-  <button id="refresh-btn" title="רענן רשימה"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></button>
+  <button id="refresh-btn" data-t-title="רענן רשימה" title="רענן רשימה"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></button>
 </header>
 
+<main class="app-content" id="app-content">
+
 <div id="filters">
-  <input id="search" type="search" placeholder="חיפוש לפי שם, תיאור או תגית...">
+  <input id="search" type="search" data-t-placeholder="חיפוש לפי שם, תיאור או תגית..." placeholder="חיפוש לפי שם, תיאור או תגית...">
   <select id="status-filter">
-    <option value="all">כל הסטטוסים</option>
-    <option value="stable">יציב</option>
-    <option value="beta">בטא</option>
-    <option value="experimental">ניסיוני</option>
+    <option value="all" data-t="כל הסטטוסים">כל הסטטוסים</option>
+    <option value="stable" data-t="יציב">יציב</option>
+    <option value="beta" data-t="בטא">בטא</option>
+    <option value="experimental" data-t="ניסיוני">ניסיוני</option>
   </select>
-  <label id="hide-installed-wrap" title="הסתרת תוספים שכבר מותקנים אצלך (למעט כאלה עם עדכון זמין)">
+  <label id="hide-installed-wrap" data-t-title="הסתרת תוספים שכבר מותקנים אצלך (למעט כאלה עם עדכון זמין)" title="הסתרת תוספים שכבר מותקנים אצלך (למעט כאלה עם עדכון זמין)">
     <input type="checkbox" id="hide-installed">
     <span class="switch"></span>
-    <span>הסתר מותקנים</span>
+    <span data-t="הסתר מותקנים">הסתר מותקנים</span>
   </label>
 </div>
 
@@ -756,12 +786,15 @@
 <div id="home" class="hidden"></div>
 <div id="view-title" class="hidden"></div>
 
-<div id="loading"><div class="spinner"></div><p>טוען תוספים...</p></div>
+<div id="loading"><div class="spinner"></div><p data-t="טוען תוספים...">טוען תוספים...</p></div>
 <div id="error" class="hidden"><span class="icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#8a3010" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span><p id="error-msg"></p></div>
 <div id="grid" class="hidden"></div>
-<div id="empty" class="hidden"><p>לא נמצאו תוספים לפי הסינון.</p></div>
+<div id="empty" class="hidden"><p data-t="לא נמצאו תוספים לפי הסינון.">לא נמצאו תוספים לפי הסינון.</p></div>
 
 <div id="detail-page" class="hidden"></div>
+
+</main>
+</div>
 
 <div id="updates-backdrop" class="hidden">
   <div id="updates-modal">
@@ -772,7 +805,7 @@
     </div>
     <div class="modal-body" id="updates-list"></div>
     <div class="modal-footer">
-      <button class="update-all-btn" id="update-all-btn">עדכן הכל</button>
+      <button class="update-all-btn" id="update-all-btn" data-t="עדכן הכל">עדכן הכל</button>
     </div>
   </div>
 </div>
@@ -785,8 +818,8 @@
 <div id="new-toast" class="hidden">
   <span class="toast-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.6 4.6L18 9l-4.4 1.4L12 15l-1.6-4.6L6 9l4.4-1.4L12 3z"/><path d="M19 14l.8 2.2L22 17l-2.2.8L19 20l-.8-2.2L16 17l2.2-.8L19 14z"/></svg></span>
   <span class="toast-text" id="new-toast-text"></span>
-  <button class="toast-view" id="new-toast-view">צפה</button>
-  <button class="toast-close" id="new-toast-close" title="סגור">✕</button>
+  <button class="toast-view" id="new-toast-view" data-t="צפה">צפה</button>
+  <button class="toast-close" id="new-toast-close" data-t-title="סגור" title="סגור">✕</button>
 </div>
 
 <script>
@@ -795,6 +828,44 @@
   // תמונת ברירת מחדל לתוסף ללא תמונה. נטענת ישירות מ-otzaria.org (כבר ב-allowlist),
   // לא נארזת בחבילה — הקובץ ~2MB והחנות ממילא דורשת רשת.
   const DEFAULT_IMG = BASE + '/logo.svg';
+
+  // ── רב-לשוניות ───────────────────────────────────────────────────
+  // עברית היא שפת הבסיס: מפתחות התרגום הם מחרוזות המקור בעברית, ושפה שאין לה
+  // מילון (window.TRANSLATIONS[lang]) נשארת בעברית מאליה. השפה מגיעה מ-
+  // payload.app של plugin.boot (או app.getLocale), ומתעדכנת חי דרך
+  // settings.changed עם המפתח key-settings-language.
+  let dict = null;                 // המילון הפעיל, או null לעברית
+  let numLocale = 'he-IL';         // עיצוב מספרים ותאריכים
+  let sortLocale = 'he';           // מיון תגיות
+
+  function t(s, vars) {
+    let out = (dict && dict[s]) || s;
+    if (vars) for (const k in vars) out = out.split('{' + k + '}').join(vars[k]);
+    return out;
+  }
+
+  // טקסט סטטי ב-HTML מסומן ב-data-t / data-t-title / data-t-placeholder,
+  // כשהערך הוא מחרוזת המקור בעברית — כך אפשר לתרגם שוב בכל החלפת שפה.
+  function translateStatic() {
+    document.querySelectorAll('[data-t]').forEach(el => { el.textContent = t(el.dataset.t); });
+    document.querySelectorAll('[data-t-title]').forEach(el => { el.title = t(el.dataset.tTitle); });
+    document.querySelectorAll('[data-t-placeholder]').forEach(el => { el.placeholder = t(el.dataset.tPlaceholder); });
+    document.title = t('חנות תוספים');
+  }
+
+  function setLanguage(language, locale, textDirection) {
+    const lang = language || 'he';
+    dict = (window.TRANSLATIONS && window.TRANSLATIONS[lang]) || null;
+    const dir = textDirection || (lang === 'he' ? 'rtl' : 'ltr');
+    // ה-HTML הסטטי נשאר dir="rtl"; הכיוון האמיתי נקבע כאן בזמן ריצה
+    document.documentElement.dir = dir;
+    document.documentElement.lang = lang;
+    numLocale = locale || (lang === 'he' ? 'he-IL' : 'en-US');
+    sortLocale = lang;
+    translateStatic();
+    // אם הקטלוג כבר נטען — מרעננים את התצוגה כדי שהטקסט הדינמי יתורגם גם הוא
+    if (allPlugins.length) { initTags(); initCatsBar(); renderCurrentView(); }
+  }
 
   let allPlugins = [];
   let installedPlugins = [];   // [{ name, version }]
@@ -831,7 +902,8 @@
     try { await Otzaria.call('storage.set', { key, value }); } catch {}
   }
 
-  const statusLabel = { stable: 'יציב', beta: 'בטא', experimental: 'ניסיוני' };
+  const STATUS_KEYS = { stable: 'יציב', beta: 'בטא', experimental: 'ניסיוני' };
+  const statusLabel = s => (STATUS_KEYS[s] ? t(STATUS_KEYS[s]) : null);
   const statusClass = { stable: 'badge-stable', beta: 'badge-beta', experimental: 'badge-experimental' };
 
   // ── עדכונים ─────────────────────────────────────────────────────
@@ -936,7 +1008,7 @@
 
   function showUpdatesModal(updates) {
     document.getElementById('updates-title').textContent =
-      `עדכונים זמינים (${updates.length})`;
+      t('עדכונים זמינים ({n})', { n: updates.length });
 
     const list = document.getElementById('updates-list');
     list.innerHTML = '';
@@ -948,9 +1020,9 @@
       row.innerHTML = `
         <div class="update-info">
           <div class="update-name">${esc(plugin.name)}</div>
-          <div class="update-versions">${esc(installed.version)} ← ${esc(plugin.version)}</div>
+          <div class="update-versions">${esc(t('{from} ← {to}', { from: installed.version, to: plugin.version }))}</div>
         </div>
-        <button class="update-btn" data-url="${esc(downloadUrl)}" data-update="1">עדכן</button>`;
+        <button class="update-btn" data-url="${esc(downloadUrl)}" data-update="1">${esc(t('עדכן'))}</button>`;
       list.appendChild(row);
     });
 
@@ -962,7 +1034,7 @@
         row.remove();
         if (!list.querySelector('.update-row')) hide('updates-backdrop');
         else document.getElementById('updates-title').textContent =
-          `עדכונים זמינים (${list.querySelectorAll('.update-row').length})`;
+          t('עדכונים זמינים ({n})', { n: list.querySelectorAll('.update-row').length });
       }, 900);
     }
 
@@ -975,10 +1047,10 @@
 
     const updateAllBtn = document.getElementById('update-all-btn');
     updateAllBtn.disabled = false;
-    updateAllBtn.textContent = 'עדכן הכל';
+    updateAllBtn.textContent = t('עדכן הכל');
     updateAllBtn.onclick = async () => {
       updateAllBtn.disabled = true;
-      updateAllBtn.textContent = 'מעדכן...';
+      updateAllBtn.textContent = t('מעדכן...');
       const btns = [...list.querySelectorAll('.update-btn:not(:disabled)')];
       const results = [];
       for (const btn of btns) {
@@ -986,14 +1058,14 @@
         results.push(result);
         settleRow(btn.closest('.update-row'), result);   // מוריד מהרשימה מה שהצליח
       }
-      updateAllBtn.textContent = 'הושלם ✓';
+      updateAllBtn.textContent = t('הושלם ✓');
       // כל העדכונים הצליחו — סוגרים את החלונית אחרי רגע קצר של משוב.
       // אם משהו נכשל/לא דווח, משאירים פתוח כדי שיהיה אפשר לנסות שוב.
       if (results.length && results.every(r => r === 'success')) {
         setTimeout(() => hide('updates-backdrop'), 900);
       } else if (results.some(r => r !== 'success')) {
         updateAllBtn.disabled = false;
-        updateAllBtn.textContent = 'נסה שוב את מה שנכשל';
+        updateAllBtn.textContent = t('נסה שוב את מה שנכשל');
       }
     };
 
@@ -1035,8 +1107,8 @@
     function update() {
       if (pending.length === 0) { hide('new-toast'); return; }
       document.getElementById('new-toast-text').textContent = pending.length === 1
-        ? 'תוסף חדש בחנות!'
-        : `${pending.length} תוספים חדשים בחנות!`;
+        ? t('תוסף חדש בחנות!')
+        : t('{n} תוספים חדשים בחנות!', { n: pending.length });
       show('new-toast');
     }
 
@@ -1072,7 +1144,7 @@
         // דף הבית האצור — כשל בו אינו מפיל את החנות (נופלים ל"כל התוספים")
         Otzaria.call('network.fetch', { url: withAppVersion(BASE + '/api/plugins/store-home') }).catch(() => null),
       ]);
-      if (!fetchRes.success) throw new Error(fetchRes.error?.message || 'שגיאת רשת');
+      if (!fetchRes.success) throw new Error(fetchRes.error?.message || t('שגיאת רשת'));
       if (fetchRes.data.status !== 200) throw new Error(`HTTP ${fetchRes.data.status}`);
       const rawCatalog = JSON.parse(fetchRes.data.body);
       // לכל תוסף בוחרים את הגרסה הגבוהה ביותר התואמת לגרסת אוצריא של המשתמש
@@ -1098,7 +1170,7 @@
       const updates = getAvailableUpdates();
       if (updates.length > 0) showUpdatesModal(updates);
     } catch (e) {
-      document.getElementById('error-msg').textContent = 'שגיאה בטעינת התוספים: ' + e.message;
+      document.getElementById('error-msg').textContent = t('שגיאה בטעינת התוספים: {msg}', { msg: e.message });
       show('error');
     }
     hide('loading');
@@ -1127,14 +1199,15 @@
     const root = document.documentElement;
     const set = (k, v) => { if (v) root.style.setProperty(k, v); };
 
-    const high = cs.surfaceContainerHigh || cs.surface;            // שכבת רקע עדינה
+    const high = cs.surfaceContainerHigh || cs.surface;            // רקע הסרגל העליון של אוצריא
+    const pageBg = cs.surfaceContainer || high;                    // שכבת רקע עדינה מתחת לפס
     const onVar = cs.onSurfaceVariant || cs.onSurface;             // טקסט משני
     const outlineSoft = cs.outlineVariant || cs.outline;          // מסגרת עדינה
 
     // רקעים
-    set('--color-surface', high);                                 // רקע כללי של הדף
+    set('--color-surface', pageBg);                               // רקע כללי של הדף
     set('--color-surface-card', cs.surface);                      // כרטיסים/כותרת/חלוניות
-    set('--color-surface-soft', high);                            // שדות קלט, סרגל תגיות
+    set('--color-surface-soft', pageBg);                          // שדות קלט, סרגל תגיות
     set('--color-surface-muted', cs.surfaceContainerHighest);     // צ'יפים, badge גרסה
     set('--color-placeholder', cs.surfaceContainerHighest);       // רקע placeholder לתמונה
     // טקסט
@@ -1153,13 +1226,23 @@
     set('--color-accent', cs.primary);
     set('--color-on-accent', cs.onPrimary);
     set('--color-primary-hover', darken(cs.primary, 0.12));
+    // רקע פס הכותרת — אותו צבע כמו הסרגל העליון של מסכי הספרים באוצריא
+    set('--color-surface-container-high', high);
   }
 
-  // ה-theme מגיע כבר ב-plugin.boot (ללא הרשאה); נתפוס אותו מוקדם ככל האפשר.
+  // ה-theme והשפה מגיעים כבר ב-plugin.boot (ללא הרשאה); נתפוס אותם מוקדם ככל האפשר.
   try {
-    Otzaria.on('plugin.boot', p => { if (p && p.theme) applyTheme(p.theme); });
+    Otzaria.on('plugin.boot', p => {
+      if (p && p.theme) applyTheme(p.theme);
+      if (p && p.app) setLanguage(p.app.language, p.app.locale, p.app.textDirection);
+    });
     // עדכון חי כשהמשתמש מחליף ערכת צבעים/מצב כהה (הרשאה: events.subscribe:theme.changed)
     Otzaria.on('theme.changed', applyTheme);
+    // עדכון חי כשהמשתמש מחליף את שפת הממשק (הרשאה: events.subscribe:settings.changed).
+    // newValue הוא קוד השפה האפקטיבי ('he'/'en') גם כשהבחירה היא 'system'.
+    Otzaria.on('settings.changed', e => {
+      if (e && e.key === 'key-settings-language') setLanguage(e.newValue);
+    });
   } catch {}
 
   // ── טעינה ראשונית ────────────────────────────────────────────────
@@ -1169,6 +1252,11 @@
     try {
       const res = await Otzaria.call('app.getTheme', {});
       if (res && res.success) applyTheme(res.data);
+    } catch {}
+    // כנ"ל לשפה — מוודא את שפת הממשק הנוכחית גם אם plugin.boot כבר חלף
+    try {
+      const loc = await Otzaria.call('app.getLocale', {});
+      if (loc && loc.success) setLanguage(loc.data.language, loc.data.locale, loc.data.textDirection);
     } catch {}
     // גרסת אוצריא קבועה לאורך הריצה — מספיק למשוך פעם אחת לפני הטעינה
     try {
@@ -1245,7 +1333,7 @@
     if (!cats.length) { hide('cats-bar'); return; }
 
     if (hasCuratedHome()) {
-      bar.appendChild(makeCatChip('בית', 'home', () => {
+      bar.appendChild(makeCatChip(t('בית'), 'home', () => {
         clearSearch();
         currentView = { type: 'home' };
         renderCurrentView();
@@ -1264,7 +1352,7 @@
       bar.appendChild(chip);
     });
     // "כל התוספים" — מוצא אחרון, מוצנע בסוף השורה
-    const all = makeCatChip(`כל התוספים (${storeHome.totalPublicPlugins || allPlugins.length})`, 'all', () => {
+    const all = makeCatChip(t('כל התוספים ({n})', { n: storeHome.totalPublicPlugins || allPlugins.length }), 'all', () => {
       clearSearch();
       currentView = { type: 'all' };
       renderCurrentView();
@@ -1286,7 +1374,7 @@
   function renderCurrentView() {
     hide('detail-page');
     show('filters');
-    document.getElementById('plugin-count').textContent = `${allPlugins.length} תוספים`;
+    document.getElementById('plugin-count').textContent = t('{n} תוספים', { n: allPlugins.length });
     if (storeHome && (storeHome.categories || []).length) show('cats-bar'); else hide('cats-bar');
     updateCatsBarActive();
 
@@ -1333,7 +1421,7 @@
     const featured = toCatalogList(storeHome.featured);
     if (featured.length) {
       const sec = document.createElement('section');
-      sec.innerHTML = `<div class="home-section-head"><div><div class="home-section-title">תוספים נבחרים</div></div></div>`;
+      sec.innerHTML = `<div class="home-section-head"><div><div class="home-section-title">${esc(t('תוספים נבחרים'))}</div></div></div>`;
       const grid = document.createElement('div');
       grid.className = 'home-grid';
       featured.forEach(p => grid.appendChild(makeCard(p)));
@@ -1352,7 +1440,7 @@
           <div class="home-section-title">${esc(c.name)}</div>
           ${c.description ? `<div class="home-section-desc">${esc(c.description)}</div>` : ''}
         </div>
-        <button class="home-see-all">לכל הקטגוריה (${c.pluginCount}) ←</button>`;
+        <button class="home-see-all">${esc(t('לכל הקטגוריה ({n}) ←', { n: c.pluginCount }))}</button>`;
       head.querySelector('.home-see-all').onclick = () => {
         currentView = { type: 'category', slug: c.slug, name: c.name };
         renderCurrentView();
@@ -1368,7 +1456,7 @@
     // פס גילוי מוצנע אל הרשימה המלאה
     const strip = document.createElement('div');
     strip.className = 'home-footer-strip';
-    strip.innerHTML = `לא מצאתם את מה שחיפשתם? <button>עיינו בכל התוספים (${storeHome.totalPublicPlugins || allPlugins.length}) ←</button>`;
+    strip.innerHTML = `${esc(t('לא מצאתם את מה שחיפשתם? '))}<button>${esc(t('עיינו בכל התוספים ({n}) ←', { n: storeHome.totalPublicPlugins || allPlugins.length }))}</button>`;
     strip.querySelector('button').onclick = () => {
       currentView = { type: 'all' };
       renderCurrentView();
@@ -1381,7 +1469,7 @@
   // ── דף קטגוריה ──
   async function renderCategory() {
     const { slug, name } = currentView;
-    setViewTitle(name || 'קטגוריה', '');
+    setViewTitle(name || t('קטגוריה'), '');
     if (!categoryCache.has(slug)) {
       show('loading'); hide('grid'); hide('empty');
       try {
@@ -1390,7 +1478,7 @@
         categoryCache.set(slug, JSON.parse(res.body));
       } catch {
         hide('loading');
-        setViewTitle(name || 'קטגוריה', 'שגיאה בטעינת הקטגוריה — נסו לרענן');
+        setViewTitle(name || t('קטגוריה'), t('שגיאה בטעינת הקטגוריה — נסו לרענן'));
         fillGrid([]);
         return;
       }
@@ -1439,8 +1527,8 @@
     }
 
     setViewTitle(
-      list.length ? `נמצאו ${list.length} תוצאות עבור „${q}"` : '',
-      relaxed ? 'לא נמצאו התאמות מדויקות — מוצגות תוצאות קרובות' : ''
+      list.length ? t('נמצאו {n} תוצאות עבור „{q}"', { n: list.length, q }) : '',
+      relaxed ? t('לא נמצאו התאמות מדויקות — מוצגות תוצאות קרובות') : ''
     );
     fillGrid(list);
   }
@@ -1448,13 +1536,13 @@
   // ── תגיות ────────────────────────────────────────────────────────
   function initTags() {
     const tagSet = new Set();
-    allPlugins.forEach(p => (p.tags || []).forEach(t => tagSet.add(t)));
-    const sorted = [...tagSet].sort((a, b) => a.localeCompare(b, 'he'));
+    allPlugins.forEach(p => (p.tags || []).forEach(tag => tagSet.add(tag)));
+    const sorted = [...tagSet].sort((a, b) => a.localeCompare(b, sortLocale));
 
     const container = document.getElementById('tags');
     container.innerHTML = '';
-    container.appendChild(makeTag('כל התגיות', 'all', true));
-    sorted.forEach(t => container.appendChild(makeTag(t, t, false)));
+    container.appendChild(makeTag(t('כל התגיות'), 'all', activeTag === 'all'));
+    sorted.forEach(tag => container.appendChild(makeTag(tag, tag, activeTag === tag)));
     document.getElementById('tags-wrap').classList.remove('hidden');
     tagsExpanded = false;
     updateTagsToggle();
@@ -1486,11 +1574,11 @@
     if (tagsExpanded) {
       tags.classList.remove('collapsed');
       tags.style.maxHeight = '';
-      toggle.textContent = 'הצג פחות';
+      toggle.textContent = t('הצג פחות');
     } else {
       tags.classList.add('collapsed');
       tags.style.maxHeight = collapsedMax + 'px';
-      toggle.textContent = 'הצג עוד';
+      toggle.textContent = t('הצג עוד');
     }
   }
 
@@ -1532,8 +1620,8 @@
 
     const countEl = document.getElementById('plugin-count');
     countEl.textContent = list.length === allPlugins.length
-      ? `${allPlugins.length} תוספים`
-      : `${list.length} מתוך ${allPlugins.length}`;
+      ? t('{n} תוספים', { n: allPlugins.length })
+      : t('{n} מתוך {total}', { n: list.length, total: allPlugins.length });
 
     fillGrid(list);
   }
@@ -1550,14 +1638,14 @@
       <img class="card-img${hasImg ? '' : ' is-default'}" src="${esc(imgUrl)}" alt="${esc(p.name)}" loading="lazy">
       <div class="card-body">
         <div class="card-badges">
-          <span class="badge ${statusClass[p.status] || ''}">${statusLabel[p.status] || p.status}</span>
-          <span class="badge badge-version">גרסה ${esc(p.version)}</span>
+          <span class="badge ${statusClass[p.status] || ''}">${esc(statusLabel(p.status) || p.status)}</span>
+          <span class="badge badge-version">${esc(t('גרסה {v}', { v: p.version }))}</span>
           ${downloadsBadge(p)}
         </div>
         <div class="card-title">${esc(p.name)}</div>
         <div class="card-desc">${esc(p.shortDescription || '')}</div>
         ${(p.tags || []).length > 0
-          ? `<div class="card-tags">${p.tags.slice(0,4).map(t => `<span class="card-tag">${esc(t)}</span>`).join('')}</div>`
+          ? `<div class="card-tags">${p.tags.slice(0,4).map(tag => `<span class="card-tag">${esc(tag)}</span>`).join('')}</div>`
           : ''}
         <div class="card-actions">
           ${installButtonHtml(p, downloadUrl, 'btn btn-primary install-btn')}
@@ -1578,11 +1666,19 @@
     hide('grid'); hide('empty'); hide('loading'); hide('error');
     document.getElementById('plugin-count').textContent = '';
     show('detail-page');
+    scrollContentTop();
+  }
+
+  // הגלילה חיה ב-.app-content (פס הכותרת קבוע) — מעבר בין תצוגות מחזיר אותה לראש
+  function scrollContentTop() {
+    const c = document.getElementById('app-content');
+    if (c) c.scrollTop = 0;
   }
 
   // חזרה מדף פרטים — אל התצוגה שממנה הגיע המשתמש (בית/קטגוריה/הכול/חיפוש)
   function showListPage() {
     renderCurrentView();
+    scrollContentTop();
   }
 
   function showDetail(p) {
@@ -1595,14 +1691,14 @@
 
     const detail = document.getElementById('detail-page');
     detail.innerHTML = `
-      <button class="back-btn" id="back-btn"><span class="back-arrow">→</span> חזרה לחנות</button>
+      <button class="back-btn" id="back-btn"><span class="back-arrow">${t('→')}</span> ${esc(t('חזרה לחנות'))}</button>
       <div class="detail-header">
         <img class="detail-main-img${hasImg ? '' : ' is-default'}" src="${esc(imgUrl)}" alt="${esc(p.name)}" loading="lazy">
         <div class="detail-info">
           <div class="detail-name">${esc(p.name)}</div>
           <div class="detail-badges">
-            <span class="badge ${statusClass[p.status] || ''}">${statusLabel[p.status] || esc(p.status)}</span>
-            <span class="badge badge-version">גרסה ${esc(p.version)}</span>
+            <span class="badge ${statusClass[p.status] || ''}">${esc(statusLabel(p.status) || p.status)}</span>
+            <span class="badge badge-version">${esc(t('גרסה {v}', { v: p.version }))}</span>
             ${downloadsBadge(p)}
           </div>
           <div class="detail-desc">${esc(p.description || p.shortDescription || '')}</div>
@@ -1613,63 +1709,63 @@
       </div>
       <div class="detail-grid">
         <div class="detail-card">
-          <h2><span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></span> מידע כללי</h2>
+          <h2><span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></span> ${esc(t('מידע כללי'))}</h2>
           <div class="info-grid">
             <div class="info-cell">
-              <div class="info-label">גרסה</div>
+              <div class="info-label">${esc(t('גרסה'))}</div>
               <div class="info-value">${esc(p.version)}</div>
             </div>
             <div class="info-cell">
-              <div class="info-label">סטטוס</div>
-              <div class="info-value">${statusLabel[p.status] || esc(p.status)}</div>
+              <div class="info-label">${esc(t('סטטוס'))}</div>
+              <div class="info-value">${esc(statusLabel(p.status) || p.status)}</div>
             </div>
             <div class="info-cell">
-              <div class="info-label">הורדות</div>
+              <div class="info-label">${esc(t('הורדות'))}</div>
               <div class="info-value">${fmtNum(p.downloadCount)}</div>
             </div>
             ${p.pluginFileSize > 0 ? `
             <div class="info-cell">
-              <div class="info-label">גודל</div>
+              <div class="info-label">${esc(t('גודל'))}</div>
               <div class="info-value">${fmtSize(p.pluginFileSize)}</div>
             </div>` : ''}
             ${p.author ? `
             <div class="info-cell">
-              <div class="info-label">מפתח</div>
+              <div class="info-label">${esc(t('מפתח'))}</div>
               <div class="info-value">${esc(p.author)}</div>
             </div>` : ''}
             ${p.updatedAt ? `
             <div class="info-cell">
-              <div class="info-label">עודכן</div>
+              <div class="info-label">${esc(t('עודכן'))}</div>
               <div class="info-value">${esc(formatDate(p.originalDate || p.updatedAt))}</div>
             </div>` : ''}
             ${p.compatibleWith ? `
             <div class="info-cell full">
-              <div class="info-label">תאימות</div>
+              <div class="info-label">${esc(t('תאימות'))}</div>
               <div class="info-value">${esc(p.compatibleWith)}</div>
             </div>` : ''}
             <div class="info-cell full">
-              <div class="info-label">חיבור אינטרנט</div>
-              <div class="info-value">${p.requiresNetwork ? 'נדרש' : '✓ לא נדרש'}</div>
+              <div class="info-label">${esc(t('חיבור אינטרנט'))}</div>
+              <div class="info-value">${esc(p.requiresNetwork ? t('נדרש') : t('✓ לא נדרש'))}</div>
             </div>
             ${p.newerIncompatibleVersion ? `
             <div class="info-cell full">
-              <div class="info-label">שים לב</div>
-              <div class="info-value">מוצגת הגרסה התואמת לגרסת אוצריא שלך. קיימת גרסה חדשה יותר (${esc(p.newerIncompatibleVersion)}) הדורשת גרסת אוצריא מתקדמת יותר.</div>
+              <div class="info-label">${esc(t('שים לב'))}</div>
+              <div class="info-value">${esc(t('מוצגת הגרסה התואמת לגרסת אוצריא שלך. קיימת גרסה חדשה יותר ({v}) הדורשת גרסת אוצריא מתקדמת יותר.', { v: p.newerIncompatibleVersion }))}</div>
             </div>` : ''}
           </div>
         </div>
         <div class="detail-card">
-          <h2><span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg></span> תגיות</h2>
+          <h2><span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg></span> ${esc(t('תגיות'))}</h2>
           <div class="detail-tags">
-            ${(p.tags || []).map(t => `<span class="detail-tag" data-tag="${esc(t)}">${esc(t)}</span>`).join('')}
+            ${(p.tags || []).map(tag => `<span class="detail-tag" data-tag="${esc(tag)}">${esc(tag)}</span>`).join('')}
           </div>
         </div>
       </div>
       ${screenshots.length > 0 ? `
       <div class="screenshots-section">
-        <h2><span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></span> צילומי מסך</h2>
+        <h2><span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></span> ${esc(t('צילומי מסך'))}</h2>
         <div class="screenshots-row">
-          ${screenshots.map(s => `<img class="screenshot-thumb" src="${esc(s)}" alt="צילום מסך" loading="lazy">`).join('')}
+          ${screenshots.map(s => `<img class="screenshot-thumb" src="${esc(s)}" alt="${esc(t('צילום מסך'))}" loading="lazy">`).join('')}
         </div>
       </div>` : ''}`;
 
@@ -1708,10 +1804,10 @@
   function installButtonHtml(p, downloadUrl, className) {
     const state = installStateOf(p);
     if (state === 'installed') {
-      return `<button class="${className}" disabled>מותקן ✓</button>`;
+      return `<button class="${className}" disabled>${esc(t('מותקן ✓'))}</button>`;
     }
-    const label = state === 'update' ? 'עדכון' : 'התקנה';
-    return `<button class="${className}" data-url="${esc(downloadUrl)}"${state === 'update' ? ' data-update="1"' : ''}>${label}</button>`;
+    const label = state === 'update' ? t('עדכון') : t('התקנה');
+    return `<button class="${className}" data-url="${esc(downloadUrl)}"${state === 'update' ? ' data-update="1"' : ''}>${esc(label)}</button>`;
   }
 
   // ── כלים ─────────────────────────────────────────────────────────
@@ -1719,20 +1815,20 @@
   const DOWNLOAD_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
 
   function fmtNum(n) {
-    return (Number(n) || 0).toLocaleString('he-IL');
+    return (Number(n) || 0).toLocaleString(numLocale);
   }
 
   // גודל קובץ בתצוגה ידידותית (B/KB/MB)
   function fmtSize(bytes) {
     const n = Number(bytes) || 0;
     if (n < 1024) return `${n} B`;
-    if (n < 1024 * 1024) return `${(n / 1024).toLocaleString('he-IL', { maximumFractionDigits: 0 })} KB`;
-    return `${(n / (1024 * 1024)).toLocaleString('he-IL', { maximumFractionDigits: 1 })} MB`;
+    if (n < 1024 * 1024) return `${(n / 1024).toLocaleString(numLocale, { maximumFractionDigits: 0 })} KB`;
+    return `${(n / (1024 * 1024)).toLocaleString(numLocale, { maximumFractionDigits: 1 })} MB`;
   }
 
   // תגית כמות הורדות. מוצגת תמיד (גם 0), כדי לשמור על מראה אחיד עם האתר.
   function downloadsBadge(p) {
-    return `<span class="badge badge-downloads" title="כמות הורדות">${DOWNLOAD_ICON}${fmtNum(p.downloadCount)} הורדות</span>`;
+    return `<span class="badge badge-downloads" title="${esc(t('כמות הורדות'))}">${DOWNLOAD_ICON}${esc(t('{n} הורדות', { n: fmtNum(p.downloadCount) }))}</span>`;
   }
 
   function esc(s) {
@@ -1742,7 +1838,7 @@
   function formatDate(dateStr) {
     try {
       const d = dateStr.includes('T') ? new Date(dateStr) : new Date(dateStr + 'T12:00:00Z');
-      return d.toLocaleDateString('he-IL', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
+      return d.toLocaleDateString(numLocale, { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
     } catch { return dateStr; }
   }
 
@@ -1759,7 +1855,7 @@
 
   async function apiFetch(url, options) {
     const res = await Otzaria.call('network.fetch', { url, ...(options || {}) });
-    if (!res.success) throw new Error(res.error?.message || 'שגיאת רשת');
+    if (!res.success) throw new Error(res.error?.message || t('שגיאת רשת'));
     return res.data;
   }
 
@@ -1821,11 +1917,11 @@
       ? isUpdate
       : Boolean(plugin && installStateOf(plugin) === 'update');
     const words = updating
-      ? { progress: 'מעדכן...', success: 'עודכן בהצלחה!', failure: 'העדכון נכשל - לחץ שוב לנסיון נוסף' }
-      : { progress: 'מתקין...', success: 'הותקן בהצלחה!', failure: 'ההתקנה נכשלה - לחץ שוב לנסיון נוסף' };
+      ? { progress: t('מעדכן...'), success: t('עודכן בהצלחה!'), failure: t('העדכון נכשל - לחץ שוב לנסיון נוסף') }
+      : { progress: t('מתקין...'), success: t('הותקן בהצלחה!'), failure: t('ההתקנה נכשלה - לחץ שוב לנסיון נוסף') };
 
     btn.disabled = true;
-    btn.innerHTML = `<span class="btn-spinner"></span>${words.progress}`;
+    btn.innerHTML = `<span class="btn-spinner"></span>${esc(words.progress)}`;
     const token = await createInstallToken(downloadUrl);
     try {
       await Otzaria.call('plugin.requestInstall', {
@@ -1834,11 +1930,11 @@
       });
     } catch (err) {
       btn.disabled = false;
-      btn.textContent = 'שגיאה';
+      btn.textContent = t('שגיאה');
       return 'failure';
     }
     // ללא טוקן אין מעקב — לא מסמנים כמותקן כדי לא להצהיר על תוצאה שאינה ידועה
-    if (!token) { btn.textContent = 'נשלח ✓'; return 'no_report'; }
+    if (!token) { btn.textContent = t('נשלח ✓'); return 'no_report'; }
 
     const result = await waitForInstallResult(token);
     if (result === 'success') {
@@ -1848,7 +1944,7 @@
       btn.disabled = false;
       btn.textContent = words.failure;
     } else {
-      btn.textContent = 'נשלח ✓';
+      btn.textContent = t('נשלח ✓');
     }
     return result;
   }

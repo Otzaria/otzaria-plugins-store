@@ -3,6 +3,8 @@
 <head>
   <meta charset="utf-8">
   <title>חנות תוספים — רקע</title>
+  <!-- מילון התרגום המשותף עם דף ה-UI; הודעת הרקע נשלחת בשפת הממשק של המשתמש -->
+  <script src="i18n/en.js"></script>
 </head>
 <body>
 <!--
@@ -17,6 +19,15 @@
 -->
 <script>
   const API = 'https://otzaria.org/api/plugins';
+
+  // ── תרגום (כמו ב-index.html) ─────────────────────────────────────
+  // השפה מגיעה מ-payload.app.language של plugin.boot; שפה ללא מילון נשארת בעברית.
+  let dict = null;
+  function t(s, vars) {
+    let out = (dict && dict[s]) || s;
+    if (vars) for (const k in vars) out = out.split('{' + k + '}').join(vars[k]);
+    return out;
+  }
 
   // ── השוואת גרסאות SemVer (זהה ל-index.html) ──────────────────────
   function compareVersions(a, b) {
@@ -107,13 +118,13 @@
     // ניסוח ההודעה לפי מה שנמצא
     let message;
     if (updates.length > 0 && newPlugins.length > 0) {
-      message = 'יש עדכונים זמינים לתוספים שברשותך וגם תוספים חדשים בחנות. לפרטים, פתחו את תוסף חנות התוספים.';
+      message = t('יש עדכונים זמינים לתוספים שברשותך וגם תוספים חדשים בחנות. לפרטים, פתחו את תוסף חנות התוספים.');
     } else if (updates.length > 0) {
-      message = 'יש עדכונים זמינים לתוספים שברשותך. לפרטים, פתחו את תוסף חנות התוספים.';
+      message = t('יש עדכונים זמינים לתוספים שברשותך. לפרטים, פתחו את תוסף חנות התוספים.');
     } else {
       message = newPlugins.length === 1
-        ? 'יש תוסף חדש בחנות התוספים. לפרטים, פתחו את תוסף חנות התוספים.'
-        : `יש ${newPlugins.length} תוספים חדשים בחנות התוספים. לפרטים, פתחו את תוסף חנות התוספים.`;
+        ? t('יש תוסף חדש בחנות התוספים. לפרטים, פתחו את תוסף חנות התוספים.')
+        : t('יש {n} תוספים חדשים בחנות התוספים. לפרטים, פתחו את תוסף חנות התוספים.', { n: newPlugins.length });
     }
 
     await Otzaria.call('notifications.showInApp', { message, type: 'info' });
@@ -127,6 +138,9 @@
       const hasStartupPerm = payload && Array.isArray(payload.permissions)
         && payload.permissions.includes('app.run_on_startup');
       if (!isBackground || !hasStartupPerm) return;
+      // שפת הממשק לניסוח ההודעה (0.9.97+; בגרסאות ישנות אין language ונשארים בעברית)
+      const lang = payload.app.language || 'he';
+      dict = (window.TRANSLATIONS && window.TRANSLATIONS[lang]) || null;
       await checkAndNotify(payload);
     } catch {
       // כשל ברקע (רשת/JSON) — שקט, לא מטרידים את המשתמש בעליית האפליקציה
