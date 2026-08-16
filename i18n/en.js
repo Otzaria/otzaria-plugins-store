@@ -94,12 +94,12 @@ window.TRANSLATIONS.en = {
   'סגור': 'Close',
 
   // ── הודעות מופע הרקע ──
-  'יש עדכונים זמינים לתוספים שברשותך וגם תוספים חדשים בחנות. לפרטים, פתחו את תוסף חנות התוספים.':
-    'Updates are available for your plugins, and there are new plugins in the store. Open the Plugin Store for details.',
-  'יש עדכונים זמינים לתוספים שברשותך. לפרטים, פתחו את תוסף חנות התוספים.':
-    'Updates are available for your plugins. Open the Plugin Store for details.',
-  'יש תוסף חדש בחנות התוספים. לפרטים, פתחו את תוסף חנות התוספים.':
-    'A new plugin is available in the Plugin Store. Open the Plugin Store for details.',
-  'יש {n} תוספים חדשים בחנות התוספים. לפרטים, פתחו את תוסף חנות התוספים.':
-    '{n} new plugins are available in the Plugin Store. Open the Plugin Store for details.',
+  'יש עדכונים זמינים לתוספים שברשותך וגם תוספים חדשים בחנות. לחצו כאן לפתיחת חנות התוספים.':
+    'Updates are available for your plugins, and there are new plugins in the store. Click here to open the Plugin Store.',
+  'יש עדכונים זמינים לתוספים שברשותך. לחצו כאן לפתיחת חנות התוספים.':
+    'Updates are available for your plugins. Click here to open the Plugin Store.',
+  'יש תוסף חדש בחנות התוספים. לחצו כאן לפתיחה.':
+    'A new plugin is available in the Plugin Store. Click here to open it.',
+  'יש {n} תוספים חדשים בחנות התוספים. לחצו כאן לפתיחה.':
+    '{n} new plugins are available in the Plugin Store. Click here to open it.',
 };

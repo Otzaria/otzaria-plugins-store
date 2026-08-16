@@ -118,16 +118,23 @@
     // ניסוח ההודעה לפי מה שנמצא
     let message;
     if (updates.length > 0 && newPlugins.length > 0) {
-      message = t('יש עדכונים זמינים לתוספים שברשותך וגם תוספים חדשים בחנות. לפרטים, פתחו את תוסף חנות התוספים.');
+      message = t('יש עדכונים זמינים לתוספים שברשותך וגם תוספים חדשים בחנות. לחצו כאן לפתיחת חנות התוספים.');
     } else if (updates.length > 0) {
-      message = t('יש עדכונים זמינים לתוספים שברשותך. לפרטים, פתחו את תוסף חנות התוספים.');
+      message = t('יש עדכונים זמינים לתוספים שברשותך. לחצו כאן לפתיחת חנות התוספים.');
     } else {
       message = newPlugins.length === 1
-        ? t('יש תוסף חדש בחנות התוספים. לפרטים, פתחו את תוסף חנות התוספים.')
-        : t('יש {n} תוספים חדשים בחנות התוספים. לפרטים, פתחו את תוסף חנות התוספים.', { n: newPlugins.length });
+        ? t('יש תוסף חדש בחנות התוספים. לחצו כאן לפתיחה.')
+        : t('יש {n} תוספים חדשים בחנות התוספים. לחצו כאן לפתיחה.', { n: newPlugins.length });
     }
 
-    await Otzaria.call('notifications.showInApp', { message, type: 'info' });
+    // tapOpenPlugin (0.9.97+): לחיצה על ההודעה פותחת את דף החנות. באפליקציה
+    // ישנה יותר הפרמטר פשוט מתעלם — ההודעה מוצגת רגיל, בלי לחיצוּת.
+    await Otzaria.call('notifications.showInApp', {
+      message,
+      type: 'info',
+      tapOpenPlugin: true,
+      tapPayload: { updates: updates.length, newPlugins: newPlugins.length },
+    });
   }
 
   // כל הלוגיקה מתחילה מ-plugin.boot. רצים רק ב-instance הרקע (runMode === 'background')
