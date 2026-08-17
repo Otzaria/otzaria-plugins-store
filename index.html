@@ -33,6 +33,10 @@
       --color-badge-beta-bg: #f0e8d0;
       --color-badge-beta-fg: #7a5010;
       --color-badge-exp-bg: #f5e8e0;
+      /* דירוגים — הכוכב המלא ומסילת הכוכבים הריקים. אין להם תפקיד מתאים
+         ב-theme של אוצריא, ולכן הם מקומיים כמו תגיות הסטטוס. */
+      --color-rating-star: #c98a05;
+      --color-rating-track: #ded3c4;
       --color-shadow-card: rgba(44,27,2,.12);
       --color-shadow-modal: rgba(44,27,2,.18);
       --color-shadow-toast: rgba(44,27,2,.32);
@@ -62,6 +66,8 @@
       --color-badge-beta-bg: #34301a;
       --color-badge-beta-fg: #e0bd66;
       --color-badge-exp-bg: #3a261c;
+      --color-rating-star: #e0bd66;
+      --color-rating-track: #4a4034;
       --color-shadow-card: rgba(0,0,0,.45);
       --color-shadow-modal: rgba(0,0,0,.55);
       --color-shadow-toast: rgba(0,0,0,.6);
@@ -291,6 +297,58 @@
       gap: 4px;
     }
     .badge-downloads svg { width: 12px; height: 12px; }
+    .badge-rating {
+      background: var(--color-surface-muted);
+      color: var(--color-text-muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .badge-rating-count { color: var(--color-text-faint); }
+
+    /* חמישה כוכבים בשתי שכבות: מסילה ריקה ומעליה שכבה צבועה שנחתכת ברוחב
+       באחוזים. כך גם דירוג של 4.6 מוצג נכון בלי אייקון חצי-כוכב. */
+    .stars { position: relative; display: inline-flex; line-height: 0; flex: none; }
+    .stars-base { display: inline-flex; color: var(--color-rating-track); }
+    .stars-fill {
+      position: absolute;
+      inset-inline-start: 0;
+      top: 0;
+      display: inline-flex;
+      overflow: hidden;
+      color: var(--color-rating-star);
+    }
+    .stars svg { width: 12px; height: 12px; flex: none; }
+    .stars-lg svg { width: 17px; height: 17px; }
+
+    /* לוח הדירוגים בדף הפרטים */
+    .rating-summary { display: flex; align-items: center; gap: 16px; }
+    .rating-score { text-align: center; flex: none; }
+    .rating-score-num { font-size: var(--fs-32); font-weight: 700; color: var(--color-on-surface); }
+    .rating-score-meta { font-size: var(--fs-11); color: var(--color-text-faint); margin-top: 3px; }
+    .rating-rows { flex: 1; display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+    .rating-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: var(--fs-11);
+      color: var(--color-text-muted);
+    }
+    .rating-row-star { display: inline-flex; align-items: center; gap: 2px; flex: none; }
+    .rating-row-star svg { width: 10px; height: 10px; color: var(--color-rating-star); }
+    .rating-bar {
+      flex: 1;
+      height: 6px;
+      border-radius: var(--radius-3);
+      background: var(--color-surface-muted);
+      overflow: hidden;
+      min-width: 0;
+    }
+    .rating-bar-fill { display: block; height: 100%; background: var(--color-rating-star); border-radius: var(--radius-3); }
+    .rating-row-count { flex: none; min-width: 22px; text-align: start; }
+    .rating-note { font-size: var(--fs-11); color: var(--color-text-faint); margin-top: 12px; }
+    .rating-verified { color: var(--color-badge-stable-fg); font-weight: 700; }
+    .rating-empty { font-size: var(--fs-13); color: var(--color-text-muted); }
 
     .card-title { font-size: var(--fs-16); font-weight: 700; color: var(--color-on-surface); }
     .card-desc  { font-size: var(--fs-13); color: var(--color-text); line-height: 1.5; flex: 1;
@@ -1644,6 +1702,7 @@
           <span class="badge ${statusClass[p.status] || ''}">${esc(statusLabel(p.status) || p.status)}</span>
           <span class="badge badge-version">${esc(t('גרסה {v}', { v: p.version }))}</span>
           ${downloadsBadge(p)}
+          ${ratingBadge(p)}
         </div>
         <div class="card-title">${esc(p.name)}</div>
         <div class="card-desc">${esc(p.shortDescription || '')}</div>
@@ -1703,6 +1762,7 @@
             <span class="badge ${statusClass[p.status] || ''}">${esc(statusLabel(p.status) || p.status)}</span>
             <span class="badge badge-version">${esc(t('גרסה {v}', { v: p.version }))}</span>
             ${downloadsBadge(p)}
+            ${ratingBadge(p)}
           </div>
           <div class="detail-desc">${esc(p.description || p.shortDescription || '')}</div>
           <div class="detail-actions">
@@ -1763,6 +1823,7 @@
             ${(p.tags || []).map(tag => `<span class="detail-tag" data-tag="${esc(tag)}">${esc(tag)}</span>`).join('')}
           </div>
         </div>
+        ${ratingCardHtml(p)}
       </div>
       ${screenshots.length > 0 ? `
       <div class="screenshots-section">
@@ -1816,6 +1877,10 @@
   // ── כלים ─────────────────────────────────────────────────────────
   // אייקון הורדה (feather download)
   const DOWNLOAD_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
+  // כוכב מלא (feather star) — צבוע ב-currentColor, לשתי שכבות המילוי
+  const STAR_ICON = '<svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
+  // כוכב קווי לכותרת לוח הדירוגים (באותו סגנון כמו שאר כותרות הכרטיסים)
+  const STAR_OUTLINE_ICON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
 
   function fmtNum(n) {
     return (Number(n) || 0).toLocaleString(numLocale);
@@ -1832,6 +1897,82 @@
   // תגית כמות הורדות. מוצגת תמיד (גם 0), כדי לשמור על מראה אחיד עם האתר.
   function downloadsBadge(p) {
     return `<span class="badge badge-downloads" title="${esc(t('כמות הורדות'))}">${DOWNLOAD_ICON}${esc(t('{n} הורדות', { n: fmtNum(p.downloadCount) }))}</span>`;
+  }
+
+  // ── דירוגים (תצוגה בלבד) ─────────────────────────────────────────
+  // הדירוג נאסף באתר החנות בלבד — אין באוצריא התחברות לחשבון, ולכן כאן
+  // מוצגים הנתונים שה-API מחזיר (ratingAvg/ratingCount/ratingBreakdown)
+  // ואין אפשרות לדרג. שדות חסרים (API ישן) = "אין דירוגים" ולא שגיאה.
+  function ratingOf(p) {
+    const count = Number(p && p.ratingCount) || 0;
+    const avg = Number(p && p.ratingAvg) || 0;
+    return {
+      count,
+      avg,
+      verified: Number(p && p.ratingVerifiedCount) || 0,
+      breakdown: Array.isArray(p && p.ratingBreakdown) ? p.ratingBreakdown : [],
+      rated: count > 0 && avg > 0,
+    };
+  }
+
+  function fmtAvg(avg) {
+    return Number(avg).toLocaleString(numLocale, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  }
+
+  // חמישה כוכבים עם מילוי חלקי לפי הממוצע
+  function starsHtml(avg, sizeClass) {
+    const pct = Math.max(0, Math.min(Number(avg) || 0, 5)) / 5 * 100;
+    const row = STAR_ICON.repeat(5);
+    return `<span class="stars${sizeClass ? ' ' + sizeClass : ''}" aria-hidden="true">`
+      + `<span class="stars-base">${row}</span>`
+      + `<span class="stars-fill" style="width:${pct}%">${row}</span>`
+      + `</span>`;
+  }
+
+  // תגית דירוג לכרטיס ולדף הפרטים. תוסף שטרם דורג אינו מקבל תגית כלל
+  // (בשונה מההורדות) — "0 כוכבים" היה נראה כדירוג גרוע ולא כהיעדר דירוג.
+  function ratingBadge(p) {
+    const r = ratingOf(p);
+    if (!r.rated) return '';
+    return `<span class="badge badge-rating" title="${esc(t('דירוג ממוצע מתוך {n} מדרגים', { n: fmtNum(r.count) }))}">`
+      + starsHtml(r.avg)
+      + `${esc(fmtAvg(r.avg))}<span class="badge-rating-count">${esc(t('({n})', { n: fmtNum(r.count) }))}</span>`
+      + `</span>`;
+  }
+
+  // לוח הדירוגים בדף הפרטים: הממוצע, התפלגות 5★→1★ והערה שהדירוג נעשה באתר
+  function ratingCardHtml(p) {
+    const r = ratingOf(p);
+    const body = r.rated
+      ? `<div class="rating-summary">
+          <div class="rating-score">
+            <div class="rating-score-num">${esc(fmtAvg(r.avg))}</div>
+            ${starsHtml(r.avg, 'stars-lg')}
+            <div class="rating-score-meta">${esc(t('{n} מדרגים', { n: fmtNum(r.count) }))}</div>
+          </div>
+          <div class="rating-rows">
+            ${[5, 4, 3, 2, 1].map(star => {
+              const count = Number(r.breakdown[star - 1]) || 0;
+              const pct = r.count > 0 ? (count / r.count) * 100 : 0;
+              return `<div class="rating-row">
+                <span class="rating-row-star">${esc(String(star))}${STAR_ICON}</span>
+                <span class="rating-bar"><span class="rating-bar-fill" style="width:${pct}%"></span></span>
+                <span class="rating-row-count">${esc(fmtNum(count))}</span>
+              </div>`;
+            }).join('')}
+          </div>
+        </div>
+        ${r.verified > 0
+          ? `<div class="rating-note"><span class="rating-verified">${esc(t('{n} דירוגים מאומתים', { n: fmtNum(r.verified) }))}</span> — ${esc(t('מדרגים שהתקנת התוסף אצלם נרשמה בפועל'))}</div>`
+          : ''}
+        <div class="rating-note">${esc(t('הדירוג נאסף בדף התוסף באתר החנות'))}</div>`
+      : `<div class="rating-empty">${esc(t('התוסף עדיין לא דורג'))}</div>
+         <div class="rating-note">${esc(t('הדירוג נאסף בדף התוסף באתר החנות'))}</div>`;
+
+    return `<div class="detail-card">
+      <h2><span class="icon">${STAR_OUTLINE_ICON}</span> ${esc(t('דירוג המשתמשים'))}</h2>
+      ${body}
+    </div>`;
   }
 
   function esc(s) {

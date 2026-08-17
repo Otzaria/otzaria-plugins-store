@@ -43,6 +43,9 @@ window.TRANSLATIONS.en = {
   'גרסה {v}': 'Version {v}',
   '{n} הורדות': '{n} downloads',
   'כמות הורדות': 'Download count',
+  // סוגריים סביב מספר המדרגים בתגית הדירוג
+  '({n})': '({n})',
+  'דירוג ממוצע מתוך {n} מדרגים': 'Average rating from {n} ratings',
 
   // ── דף פרטים ──
   // חץ החזרה — מצביע לכיוון הפוך בין rtl ל-ltr
@@ -63,6 +66,13 @@ window.TRANSLATIONS.en = {
   'מוצגת הגרסה התואמת לגרסת אוצריא שלך. קיימת גרסה חדשה יותר ({v}) הדורשת גרסת אוצריא מתקדמת יותר.':
     'Showing the version compatible with your Otzaria build. A newer version ({v}) exists but requires a newer Otzaria.',
   'תגיות': 'Tags',
+  // ── דירוגים (תצוגה בלבד; הדירוג עצמו נעשה באתר) ──
+  'דירוג המשתמשים': 'User ratings',
+  '{n} מדרגים': '{n} ratings',
+  '{n} דירוגים מאומתים': '{n} verified ratings',
+  'מדרגים שהתקנת התוסף אצלם נרשמה בפועל': 'raters whose installation was actually recorded',
+  'הדירוג נאסף בדף התוסף באתר החנות': 'Ratings are collected on the plugin page at the store website',
+  'התוסף עדיין לא דורג': 'This plugin has no ratings yet',
   'צילומי מסך': 'Screenshots',
   'צילום מסך': 'Screenshot',
 
