@@ -44,7 +44,10 @@
       --color-scrim-dark: rgba(0,0,0,.85);
       --color-overlay-light: rgba(255,255,255,.15);
       --color-overlay-light-hover: rgba(255,255,255,.3);
-      --font-main: 'Segoe UI', Arial, sans-serif;
+      /* גופן הממשק (DESIGN_GUIDE § טיפוגרפיה): uiFontFamily של אוצריא — sans
+         שנשאר חד בגדלים קטנים. גופן הקריאה (fontFamily) הוא לטקסט ספר בלבד
+         ואינו מוחל על ממשק. הערך כאן הוא ברירת מחדל למארח שאינו שולח את השדה. */
+      --font-ui: 'Rubik', 'Segoe UI', system-ui, sans-serif;
       --fs-11: 11px; --fs-12: 12px; --fs-13: 13px; --fs-14: 14px;
       --fs-15: 15px; --fs-16: 16px; --fs-18: 18px; --fs-22: 22px;
       --fs-24: 24px; --fs-32: 32px; --fs-40: 40px; --fs-48: 48px;
@@ -80,7 +83,7 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
-      font-family: var(--font-main);
+      font-family: var(--font-ui);
       background: var(--color-surface);
       color: var(--color-on-surface);
     }
@@ -823,7 +826,7 @@
 <main class="app-content" id="app-content">
 
 <div id="filters">
-  <input id="search" type="search" data-t-placeholder="חיפוש לפי שם, תיאור או תגית..." placeholder="חיפוש לפי שם, תיאור או תגית...">
+  <input id="search" type="search" autofocus data-t-placeholder="חיפוש לפי שם, תיאור או תגית..." placeholder="חיפוש לפי שם, תיאור או תגית...">
   <select id="status-filter">
     <option value="all" data-t="כל הסטטוסים">כל הסטטוסים</option>
     <option value="stable" data-t="יציב">יציב</option>
@@ -1254,9 +1257,21 @@
     return '#' + (1 << 24 | r << 16 | g << 8 | b).toString(16).slice(1);
   }
 
+  // גופן הממשק בלבד: uiFontFamily (מ-0.9.97). fontFamily של ה-theme הוא גופן
+  // קריאת הספרים — גופן עם תגיות שמצויר ל-25px, ובכפתור בן 12px הוא יוצא מטושטש
+  // (DESIGN_GUIDE § "גופן ממשק ≠ גופן קריאה"). מארח ישן אינו שולח את השדה,
+  // ואז נשמרת ברירת המחדל שב-CSS.
+  function applyTypography(typography) {
+    const ui = typography && typography.uiFontFamily;
+    if (!ui) return;
+    document.documentElement.style.setProperty(
+      '--font-ui', `'${ui}', 'Segoe UI', system-ui, sans-serif`);
+  }
+
   function applyTheme(theme) {
     if (!theme) return;
     document.body.classList.toggle('dark-mode', theme.mode === 'dark');
+    applyTypography(theme.typography);
     const cs = theme.colorScheme;
     if (!cs) return;
     const root = document.documentElement;

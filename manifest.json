@@ -12,13 +12,8 @@
   "sdkVersion": "1.x",
   "permissions": [
     "network.access",
-    "plugin.storage.read",
-    "plugin.storage.write",
-    "app.info.read",
     "app.run_on_startup",
     "app.startup_contributions",
-    "notifications.send",
-    "events.subscribe:theme.changed",
     "events.subscribe:settings.changed"
   ],
   "network": {
