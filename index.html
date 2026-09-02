@@ -452,7 +452,8 @@
       padding: 4px; border-radius: var(--radius-6); transition: color .15s;
     }
     .modal-close:hover { color: var(--color-on-surface); }
-    .modal-body {  flex: 1; padding: 12px 0; }
+    .modal-body { flex: 1; min-height: 0; overflow-y: auto; padding: 12px 0; }
+    .modal-header, .modal-footer { flex-shrink: 0; }
     .update-row {
       display: flex;
       align-items: center;
