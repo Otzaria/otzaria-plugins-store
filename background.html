@@ -95,7 +95,14 @@
     // מתעדכן לגרסה התומכת גם אם הגרסה האחרונה אינה תואמת אצלו.
     catalog = catalog.map(p => toEffectivePlugin(p, appVersion)).filter(Boolean);
 
-    const installed = installedRes.success ? installedRes.data : [];
+    // כמה תוספים מותקנים באותו שם נספרים כעדכון אחד (לפי הגרסה הגבוהה) — כמו בדף ה-UI
+    const installedRaw = installedRes.success ? installedRes.data : [];
+    const installedByName = new Map();
+    for (const p of installedRaw) {
+      const prev = installedByName.get(p.name);
+      if (!prev || compareVersions(p.version, prev.version) > 0) installedByName.set(p.name, p);
+    }
+    const installed = [...installedByName.values()];
     const installedNames = new Set(installed.map(p => p.name));
 
     // עדכונים: גרסה בחנות גבוהה מהמותקנת

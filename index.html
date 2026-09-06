@@ -1065,6 +1065,18 @@
     };
   }
 
+  // ההתאמה בין מותקן לחנות היא לפי שם. כשמותקנים אצל המשתמש כמה תוספים באותו שם
+  // (למשל גרסה ישנה ותוסף חדש שירש את שמה) — משאירים רק את בעל הגרסה הגבוהה,
+  // כדי שהעדכון יוצע פעם אחת ולא שורה לכל עותק.
+  function dedupeInstalledByName(list) {
+    const byName = new Map();
+    for (const p of list || []) {
+      const prev = byName.get(p.name);
+      if (!prev || compareVersions(p.version, prev.version) > 0) byName.set(p.name, p);
+    }
+    return [...byName.values()];
+  }
+
   function getAvailableUpdates() {
     return installedPlugins.flatMap(inst => {
       // מציגים עדכון רק אם הגרסה בחנות גבוהה מהמותקנת — לא אם המותקנת גבוהה יותר.
@@ -1219,7 +1231,7 @@
       // המשתמש רואה ומתעדכן לגרסה התומכת גם אם הגרסה האחרונה אינה תואמת אצלו.
       allPlugins = rawCatalog.map(toEffectivePlugin).filter(Boolean);
       if (installedRes.success) {
-        installedPlugins = installedRes.data;
+        installedPlugins = dedupeInstalledByName(installedRes.data);
         installedPlugins.forEach(p => installedVersionByName.set(p.name, p.version));
       }
       storeHome = null;
