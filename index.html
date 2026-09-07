@@ -1217,15 +1217,14 @@
     installedPlugins = [];
     installedVersionByName = new Map();
     try {
-      const [fetchRes, installedRes, homeRes] = await Promise.all([
-        Otzaria.call('network.fetch', { url: withAppVersion(API) }),
+      const [catalogRes, installedRes, homeRes] = await Promise.all([
+        apiFetch(withAppVersion(API)),
         Otzaria.call('plugin.listInstalled', {}),
         // דף הבית האצור — כשל בו אינו מפיל את החנות (נופלים ל"כל התוספים")
-        Otzaria.call('network.fetch', { url: withAppVersion(BASE + '/api/plugins/store-home') }).catch(() => null),
+        apiFetch(withAppVersion(BASE + '/api/plugins/store-home')).catch(() => null),
       ]);
-      if (!fetchRes.success) throw new Error(fetchRes.error?.message || t('שגיאת רשת'));
-      if (fetchRes.data.status !== 200) throw new Error(`HTTP ${fetchRes.data.status}`);
-      const rawCatalog = JSON.parse(fetchRes.data.body);
+      if (catalogRes.status !== 200) throw new Error(`HTTP ${catalogRes.status}`);
+      const rawCatalog = JSON.parse(catalogRes.body);
       // לכל תוסף בוחרים את הגרסה הגבוהה ביותר התואמת לגרסת אוצריא של המשתמש
       // (לא בהכרח האחרונה). תוסף שאין לו אף גרסה תואמת — מוסר מהרשימה. כך
       // המשתמש רואה ומתעדכן לגרסה התומכת גם אם הגרסה האחרונה אינה תואמת אצלו.
@@ -1235,8 +1234,8 @@
         installedPlugins.forEach(p => installedVersionByName.set(p.name, p.version));
       }
       storeHome = null;
-      if (homeRes && homeRes.success && homeRes.data.status === 200) {
-        try { storeHome = JSON.parse(homeRes.data.body); } catch { /* נופלים ל"כל התוספים" */ }
+      if (homeRes && homeRes.status === 200) {
+        try { storeHome = JSON.parse(homeRes.body); } catch { /* נופלים ל"כל התוספים" */ }
       }
       categoryCache = new Map();
       // אצירה ריקה או כשל בטעינתה → ברירת המחדל היא הרשימה המלאה
@@ -2027,10 +2026,22 @@
   const POLL_INTERVAL_MS = 2000;
   const POLL_TIMEOUT_MS = 2 * 60 * 1000;
 
+  // בקשת HTTP דרך אוצריא (network.fetchStream — היחיד שנותר מ-0.9.98; network.fetch
+  // הישן הוסר). הזרם נצרך במלואו ומוחזר כתשובה אחת { status, ok, headers, body }.
+  // כשל (הרשאה, allowlist, timeout, רשת) נזרק כ-Error עם ההודעה של אוצריא.
   async function apiFetch(url, options) {
-    const res = await Otzaria.call('network.fetch', { url, ...(options || {}) });
-    if (!res.success) throw new Error(res.error?.message || t('שגיאת רשת'));
-    return res.data;
+    let meta = null;
+    let body = '';
+    try {
+      for await (const chunk of Otzaria.call('network.fetchStream', { url, ...(options || {}) })) {
+        if (chunk.type === 'response') meta = chunk;
+        else if (chunk.type === 'data') body += chunk.body;
+      }
+    } catch (e) {
+      throw new Error((e && e.message) || t('שגיאת רשת'));
+    }
+    if (!meta) throw new Error(t('שגיאת רשת'));
+    return { status: meta.status, ok: meta.ok, headers: meta.headers, body };
   }
 
   // מאתר את התוסף בקטלוג לפי כתובת ההורדה שלו (הכפתורים נושאים רק data-url).

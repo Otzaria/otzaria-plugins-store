@@ -76,6 +76,19 @@
     try { localStorage.setItem(key, JSON.stringify(val)); } catch {}
   }
 
+  // בקשת HTTP דרך אוצריא (network.fetchStream — network.fetch הישן הוסר ב-0.9.98).
+  // הזרם נצרך במלואו ומוחזר כתשובה אחת { status, ok, headers, body }.
+  async function fetchText(url, options) {
+    let meta = null;
+    let body = '';
+    for await (const chunk of Otzaria.call('network.fetchStream', { url, ...(options || {}) })) {
+      if (chunk.type === 'response') meta = chunk;
+      else if (chunk.type === 'data') body += chunk.body;
+    }
+    if (!meta) throw new Error('no response');
+    return { status: meta.status, ok: meta.ok, headers: meta.headers, body };
+  }
+
   async function checkAndNotify(payload) {
     const appVersion = payload && payload.app ? payload.app.version : null;
 
@@ -83,13 +96,13 @@
     // מחזיר כל תוסף בגרסה התואמת ומשמיט תוספים ללא גרסה תואמת; toEffectivePlugin
     // למטה חוזר על אותה בחירה מקומית, לגיבוי מול אתר שאינו מכיר את הפרמטר.
     const catalogUrl = appVersion ? `${API}?appVersion=${encodeURIComponent(appVersion)}` : API;
-    const [fetchRes, installedRes] = await Promise.all([
-      Otzaria.call('network.fetch', { url: catalogUrl }),
+    const [catalogRes, installedRes] = await Promise.all([
+      fetchText(catalogUrl).catch(() => null),
       Otzaria.call('plugin.listInstalled', {}),
     ]);
-    if (!fetchRes.success || fetchRes.data.status !== 200) return;
+    if (!catalogRes || catalogRes.status !== 200) return;
 
-    let catalog = JSON.parse(fetchRes.data.body);
+    let catalog = JSON.parse(catalogRes.body);
     // לכל תוסף בוחרים את הגרסה התואמת הגבוהה ביותר (כמו בדף ה-UI). תוסף ללא אף
     // גרסה תואמת אינו נחשב לעדכון/חדש; עדכון נמדד מול הגרסה התואמת — כך המשתמש
     // מתעדכן לגרסה התומכת גם אם הגרסה האחרונה אינה תואמת אצלו.
