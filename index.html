@@ -937,6 +937,7 @@
   let allPlugins = [];
   let installedPlugins = [];   // [{ name, version }]
   let installedVersionByName = new Map();   // שם → גרסה מותקנת
+  let devInstalledNames = new Set();         // שמות תוספי פיתוח (לא מוצע להם עדכון)
   let activeTag = 'all';
   let appVersion = null;       // גרסת אוצריא המותקנת, לסינון תאימות
 
@@ -1068,6 +1069,15 @@
   // ההתאמה בין מותקן לחנות היא לפי שם. כשמותקנים אצל המשתמש כמה תוספים באותו שם
   // (למשל גרסה ישנה ותוסף חדש שירש את שמה) — משאירים רק את בעל הגרסה הגבוהה,
   // כדי שהעדכון יוצע פעם אחת ולא שורה לכל עותק.
+  // תוסף פיתוח נטען מתיקייה שהמפתח עורך (או משרת פיתוח מקומי) — הגרסה שלו אינה
+  // באה מהחנות, ואין שום משמעות להציע לו "עדכון": לחיצה עליו הייתה מתקינה את
+  // הגרסה הארוזה מעל העבודה המקומית. אוצריא מחריגה אותו גם בבדיקת העדכונים
+  // הפנימית שלה. השדה sourceType קיים מ-0.9.98; בגרסאות קודמות הוא חסר, ואז
+  // הכל נחשב packaged — בדיוק ההתנהגות שהייתה.
+  function isDevInstall(p) {
+    return p.sourceType === 'development' || p.sourceType === 'localhost_dev';
+  }
+
   function dedupeInstalledByName(list) {
     const byName = new Map();
     for (const p of list || []) {
@@ -1079,6 +1089,7 @@
 
   function getAvailableUpdates() {
     return installedPlugins.flatMap(inst => {
+      if (isDevInstall(inst)) return [];
       // מציגים עדכון רק אם הגרסה בחנות גבוהה מהמותקנת — לא אם המותקנת גבוהה יותר.
       const newer = allPlugins.find(p => p.name === inst.name && compareVersions(p.version, inst.version) > 0);
       return newer ? [{ installed: inst, plugin: newer }] : [];
@@ -1216,6 +1227,7 @@
     allPlugins = [];
     installedPlugins = [];
     installedVersionByName = new Map();
+    devInstalledNames = new Set();
     try {
       const [catalogRes, installedRes, homeRes] = await Promise.all([
         apiFetch(withAppVersion(API)),
@@ -1232,6 +1244,9 @@
       if (installedRes.success) {
         installedPlugins = dedupeInstalledByName(installedRes.data);
         installedPlugins.forEach(p => installedVersionByName.set(p.name, p.version));
+        (installedRes.data || []).forEach(p => {
+          if (isDevInstall(p)) devInstalledNames.add(p.name);
+        });
       }
       storeHome = null;
       if (homeRes && homeRes.status === 200) {
@@ -1369,7 +1384,9 @@
   // "לא מותקן או שיש לו עדכון" — הבסיס לסוויץ' "הסתר מותקנים".
   function isVisibleInStore(p) {
     const inst = installedVersionByName.get(p.name);
-    return inst === undefined || compareVersions(p.version, inst) > 0;
+    if (inst === undefined) return true;
+    if (devInstalledNames.has(p.name)) return false;
+    return compareVersions(p.version, inst) > 0;
   }
 
   // מסנן אחיד לכל התצוגות: כשהסוויץ' דולק — מותקנים (ללא עדכון) מוסתרים;
@@ -1382,6 +1399,7 @@
   function installStateOf(p) {
     const inst = installedVersionByName.get(p.name);
     if (inst === undefined) return 'not_installed';
+    if (devInstalledNames.has(p.name)) return 'installed';
     return compareVersions(p.version, inst) > 0 ? 'update' : 'installed';
   }
 

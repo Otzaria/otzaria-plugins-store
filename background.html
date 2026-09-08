@@ -118,8 +118,13 @@
     const installed = [...installedByName.values()];
     const installedNames = new Set(installed.map(p => p.name));
 
-    // עדכונים: גרסה בחנות גבוהה מהמותקנת
+    // עדכונים: גרסה בחנות גבוהה מהמותקנת. תוסף פיתוח (sourceType, מ-0.9.98)
+    // מוחרג — הגרסה שלו אינה באה מהחנות, ואוצריא מחריגה אותו גם בבדיקת
+    // העדכונים הפנימית שלה. באוצריא ישנה שאין בה את השדה הכל נחשב packaged.
+    const isDevInstall = p =>
+      p.sourceType === 'development' || p.sourceType === 'localhost_dev';
     const updates = installed.filter(inst =>
+      !isDevInstall(inst) &&
       catalog.some(p => p.name === inst.name && compareVersions(p.version, inst.version) > 0));
 
     // תוספים חדשים בחנות מאז הבדיקה הקודמת (לא מותקנים אצל המשתמש)
