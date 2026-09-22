@@ -577,6 +577,16 @@
     }
     .detail-install-btn:hover { background: var(--color-primary-hover); }
     .detail-install-btn:disabled { opacity: .6; cursor: default; }
+    /* תוסף שכבר מותקן — אותו מקום, אבל הכפתור פותח אותו במקום להיות מנוטרל */
+    .detail-install-btn.is-open {
+      background: var(--color-surface-card);
+      color: var(--color-on-surface);
+      border: 1.5px solid var(--color-outline-strong);
+    }
+    .detail-install-btn.is-open:hover {
+      background: var(--color-surface);
+      border-color: var(--color-on-surface);
+    }
 
     .detail-grid {
       display: grid;
@@ -937,6 +947,7 @@
   let allPlugins = [];
   let installedPlugins = [];   // [{ name, version }]
   let installedVersionByName = new Map();   // שם → גרסה מותקנת
+  let installedIdByName = new Map();        // שם → pluginId המותקן (לפתיחת התוסף)
   let devInstalledNames = new Set();         // שמות תוספי פיתוח (לא מוצע להם עדכון)
   let activeTag = 'all';
   let appVersion = null;       // גרסת אוצריא המותקנת, לסינון תאימות
@@ -1087,6 +1098,47 @@
     return [...byName.values()];
   }
 
+  // קולט את תשובת plugin.listInstalled לתוך מפות המצב. ה-pluginId נשמר כדי
+  // שנוכל לפתוח את התוסף בפועל (plugin.openOther) — ההתאמה בחנות היא לפי שם,
+  // אבל הפתיחה חייבת את המזהה האמיתי כפי שהוא מותקן אצל המשתמש.
+  function adoptInstalledList(list) {
+    installedPlugins = dedupeInstalledByName(list);
+    installedVersionByName = new Map();
+    installedIdByName = new Map();
+    devInstalledNames = new Set();
+    installedPlugins.forEach(p => {
+      installedVersionByName.set(p.name, p.version);
+      if (p.pluginId) installedIdByName.set(p.name, p.pluginId);
+    });
+    (list || []).forEach(p => {
+      if (isDevInstall(p)) devInstalledNames.add(p.name);
+    });
+  }
+
+  // רענון רשימת המותקנים מאוצריא בלבד (בלי טעינת הקטלוג מחדש) — אחרי התקנה
+  // מוצלחת, כדי לקבל את ה-pluginId של התוסף החדש ולאפשר לפתוח אותו מיד.
+  async function refreshInstalledFromApp() {
+    try {
+      const res = await Otzaria.call('plugin.listInstalled', {});
+      if (res && res.success) adoptInstalledList(res.data);
+    } catch { /* נשארים עם המצב שידוע לנו */ }
+  }
+
+  function installedIdOf(p) {
+    return (p && installedIdByName.get(p.name)) || null;
+  }
+
+  // פתיחת תוסף מותקן. pluginId שאינו מותקן מחזיר error.not_found; כל שאר
+  // המצבים (מושבת/מוסתר מהכלים) מטופלים באוצריא עצמה עם הודעה למשתמש.
+  async function openInstalledPlugin(pluginId, btn) {
+    if (!pluginId) return;
+    try {
+      await Otzaria.call('plugin.openOther', { pluginId });
+    } catch {
+      if (btn) btn.textContent = t('לא ניתן לפתוח את התוסף');
+    }
+  }
+
   function getAvailableUpdates() {
     return installedPlugins.flatMap(inst => {
       if (isDevInstall(inst)) return [];
@@ -1130,7 +1182,7 @@
 
     list.querySelectorAll('.update-btn').forEach(btn => {
       btn.addEventListener('click', async () => {
-        const result = await installPluginTracked(btn, btn.dataset.url, true);
+        const result = await installPluginTracked(btn, btn.dataset.url, true, false);
         settleRow(btn.closest('.update-row'), result);
       });
     });
@@ -1144,7 +1196,7 @@
       const btns = [...list.querySelectorAll('.update-btn:not(:disabled)')];
       const results = [];
       for (const btn of btns) {
-        const result = await installPluginTracked(btn, btn.dataset.url, true);
+        const result = await installPluginTracked(btn, btn.dataset.url, true, false);
         results.push(result);
         settleRow(btn.closest('.update-row'), result);   // מוריד מהרשימה מה שהצליח
       }
@@ -1227,6 +1279,7 @@
     allPlugins = [];
     installedPlugins = [];
     installedVersionByName = new Map();
+    installedIdByName = new Map();
     devInstalledNames = new Set();
     try {
       const [catalogRes, installedRes, homeRes] = await Promise.all([
@@ -1242,11 +1295,7 @@
       // המשתמש רואה ומתעדכן לגרסה התומכת גם אם הגרסה האחרונה אינה תואמת אצלו.
       allPlugins = rawCatalog.map(toEffectivePlugin).filter(Boolean);
       if (installedRes.success) {
-        installedPlugins = dedupeInstalledByName(installedRes.data);
-        installedPlugins.forEach(p => installedVersionByName.set(p.name, p.version));
-        (installedRes.data || []).forEach(p => {
-          if (isDevInstall(p)) devInstalledNames.add(p.name);
-        });
+        adoptInstalledList(installedRes.data);
       }
       storeHome = null;
       if (homeRes && homeRes.status === 200) {
@@ -1757,12 +1806,12 @@
           ? `<div class="card-tags">${p.tags.slice(0,4).map(tag => `<span class="card-tag">${esc(tag)}</span>`).join('')}</div>`
           : ''}
         <div class="card-actions">
-          ${installButtonHtml(p, downloadUrl, 'btn btn-primary install-btn')}
+          ${installButtonHtml(p, downloadUrl, 'btn btn-primary install-btn', 'btn btn-secondary')}
         </div>
       </div>`;
 
     art.addEventListener('click', (e) => {
-      if (e.target.closest('.install-btn')) return;
+      if (e.target.closest('.install-btn') || e.target.closest('.open-btn')) return;
       showDetail(p);
     });
 
@@ -1813,7 +1862,7 @@
           </div>
           <div class="detail-desc">${esc(p.description || p.shortDescription || '')}</div>
           <div class="detail-actions">
-            ${installButtonHtml(p, downloadUrl, 'detail-install-btn')}
+            ${installButtonHtml(p, downloadUrl, 'detail-install-btn', 'detail-install-btn is-open')}
           </div>
         </div>
       </div>
@@ -1885,6 +1934,9 @@
     const detailInstallBtn = detail.querySelector('.detail-install-btn[data-url]');
     if (detailInstallBtn) {
       detailInstallBtn.addEventListener('click', (e) => {
+        // אחרי התקנה מוצלחת הכפתור הזה הופך לכפתור פתיחה (בלי data-url);
+        // המאזין נשאר עליו, ולכן מוודאים שלא נתחיל התקנה נוספת.
+        if (!e.currentTarget.dataset.url) return;
         installPluginTracked(e.currentTarget, e.currentTarget.dataset.url, e.currentTarget.dataset.update === '1');
       });
     }
@@ -1910,12 +1962,16 @@
     });
   }
 
-  // כפתור התקנה לפי מצב: מותקן ועדכני → "מותקן ✓" מנוטרל; מותקן עם גרסה
-  // חדשה בחנות → "עדכון"; לא מותקן → "התקנה".
-  function installButtonHtml(p, downloadUrl, className) {
+  // כפתור התקנה לפי מצב: מותקן ועדכני → כפתור פתיחה (בגוון המשני); מותקן עם
+  // גרסה חדשה בחנות → "עדכון"; לא מותקן → "התקנה".
+  // openClassName הוא הסגנון של מצב "מותקן" — הכפתור האפור שפותח את התוסף.
+  function installButtonHtml(p, downloadUrl, className, openClassName) {
     const state = installStateOf(p);
     if (state === 'installed') {
-      return `<button class="${className}" disabled>${esc(t('מותקן ✓'))}</button>`;
+      const pluginId = installedIdOf(p);
+      // בלי pluginId (אוצריא ישנה שאינה מחזירה אותו) אין מה לפתוח — נשאר מידע בלבד
+      if (!pluginId) return `<button class="${className}" disabled>${esc(t('מותקן ✓'))}</button>`;
+      return `<button class="${openClassName || className} open-btn" data-plugin-id="${esc(pluginId)}" title="${esc(t('פתיחת התוסף'))}">${esc(t('מותקן ✓ · פתיחה'))}</button>`;
     }
     const label = state === 'update' ? t('עדכון') : t('התקנה');
     return `<button class="${className}" data-url="${esc(downloadUrl)}"${state === 'update' ? ' data-update="1"' : ''}>${esc(label)}</button>`;
@@ -2114,14 +2170,16 @@
   // התקנה/עדכון עם מעקב: מציג ספינר לאורך ההמתנה ומעדכן את הכפתור לפי
   // התוצאה שדווחה מאוצריא. הניסוח מותאם לפעולה — עדכון תוסף מותקן אינו
   // "התקנה". isUpdate נמסר מהקורא; אם לא — נגזר ממצב ההתקנה בפועל.
-  async function installPluginTracked(btn, downloadUrl, isUpdate) {
+  // offerOpen=false — הכפתור לא יהפוך לכפתור פתיחה בסיום. כך בחלונית העדכונים,
+  // שבה שורה שהצליחה יורדת מהרשימה אחרי רגע (ואין טעם בכפתור שייעלם).
+  async function installPluginTracked(btn, downloadUrl, isUpdate, offerOpen = true) {
     const plugin = pluginByDownloadUrl(downloadUrl);
     const updating = isUpdate !== undefined
       ? isUpdate
       : Boolean(plugin && installStateOf(plugin) === 'update');
     const words = updating
-      ? { progress: t('מעדכן...'), success: t('עודכן בהצלחה!'), failure: t('העדכון נכשל - לחץ שוב לנסיון נוסף') }
-      : { progress: t('מתקין...'), success: t('הותקן בהצלחה!'), failure: t('ההתקנה נכשלה - לחץ שוב לנסיון נוסף') };
+      ? { progress: t('מעדכן...'), success: t('עודכן בהצלחה!'), successOpen: t('עודכן בהצלחה! לחצו לפתיחה'), failure: t('העדכון נכשל - לחץ שוב לנסיון נוסף') }
+      : { progress: t('מתקין...'), success: t('הותקן בהצלחה!'), successOpen: t('הותקן בהצלחה! לחצו לפתיחה'), failure: t('ההתקנה נכשלה - לחץ שוב לנסיון נוסף') };
 
     btn.disabled = true;
     btn.innerHTML = `<span class="btn-spinner"></span>${esc(words.progress)}`;
@@ -2142,7 +2200,12 @@
     const result = await waitForInstallResult(token);
     if (result === 'success') {
       btn.textContent = words.success;
+      // רענון מאוצריא כדי לקבל את ה-pluginId של מה שזה עתה הותקן; markInstalled
+      // אחריו, כדי שהגרסה החדשה תירשם גם אם אוצריא עדיין לא הספיקה לרשום אותה.
+      await refreshInstalledFromApp();
       markInstalled(plugin);
+      const pluginId = offerOpen ? installedIdOf(plugin) : null;
+      if (pluginId) makeOpenButton(btn, pluginId, words.successOpen);
     } else if (result === 'failure') {
       btn.disabled = false;
       btn.textContent = words.failure;
@@ -2151,6 +2214,28 @@
     }
     return result;
   }
+
+  // הופך כפתור התקנה/עדכון שסיים בהצלחה לכפתור פתיחה — הודעת ההצלחה עצמה
+  // היא הלחצן, ולחיצה עליה מעבירה לתוסף.
+  function makeOpenButton(btn, pluginId, label) {
+    btn.classList.remove('install-btn', 'update-btn');
+    btn.classList.add('open-btn');
+    btn.removeAttribute('data-url');
+    btn.removeAttribute('data-update');
+    btn.dataset.pluginId = pluginId;
+    btn.title = t('פתיחת התוסף');
+    btn.textContent = label;
+    btn.disabled = false;
+  }
+
+  // כפתורי פתיחה קיימים בכרטיסים, בדף הבית, בדף הפרטים ובחלונית העדכונים —
+  // מאזין אחד ברמת המסמך חוסך שכפול בכל מקום.
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.open-btn');
+    if (!btn) return;
+    e.stopPropagation();
+    openInstalledPlugin(btn.dataset.pluginId, btn);
+  });
 
   document.getElementById('grid').addEventListener('click', (e) => {
     const btn = e.target.closest('.install-btn');

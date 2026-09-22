@@ -78,12 +78,17 @@ window.TRANSLATIONS.en = {
 
   // ── התקנה ועדכון ──
   'מותקן ✓': 'Installed ✓',
+  'מותקן ✓ · פתיחה': 'Installed ✓ · Open',
+  'פתיחת התוסף': 'Open the plugin',
+  'לא ניתן לפתוח את התוסף': 'Could not open the plugin',
   'עדכון': 'Update',
   'התקנה': 'Install',
   'מתקין...': 'Installing…',
   'מעדכן...': 'Updating…',
   'הותקן בהצלחה!': 'Installed successfully!',
   'עודכן בהצלחה!': 'Updated successfully!',
+  'הותקן בהצלחה! לחצו לפתיחה': 'Installed successfully! Click to open',
+  'עודכן בהצלחה! לחצו לפתיחה': 'Updated successfully! Click to open',
   'ההתקנה נכשלה - לחץ שוב לנסיון נוסף': 'Installation failed — click again to retry',
   'העדכון נכשל - לחץ שוב לנסיון נוסף': 'Update failed — click again to retry',
   'שגיאה': 'Error',
