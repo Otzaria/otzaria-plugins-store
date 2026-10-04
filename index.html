@@ -412,6 +412,11 @@
     }
     #error .icon { font-size: var(--fs-40); }
     #error p { color: var(--color-error); font-size: var(--fs-14); }
+    /* אין חיבור לאינטרנט — הודעה רגועה (לא אדומה) שגם משתמש לא-טכני יבין */
+    #error.offline .icon svg { stroke: var(--color-text-muted); }
+    #error.offline p { color: var(--color-on-surface); font-size: var(--fs-14); max-width: 440px; line-height: 1.7; }
+    #error.offline p.offline-title { font-size: var(--fs-16, 16px); font-weight: 700; }
+    #error .error-retry { margin-top: 4px; }
     .hidden { display: none !important; }
 
     /* ── מודל עדכונים ── */
@@ -862,7 +867,7 @@
 <div id="view-title" class="hidden"></div>
 
 <div id="loading"><div class="spinner"></div><p data-t="טוען תוספים...">טוען תוספים...</p></div>
-<div id="error" class="hidden"><span class="icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#8a3010" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span><p id="error-msg"></p></div>
+<div id="error" class="hidden"><span class="icon" id="error-icon"></span><div id="error-body"></div></div>
 <div id="grid" class="hidden"></div>
 <div id="empty" class="hidden"><p data-t="לא נמצאו תוספים לפי הסינון.">לא נמצאו תוספים לפי הסינון.</p></div>
 
@@ -1312,8 +1317,7 @@
       const updates = getAvailableUpdates();
       if (updates.length > 0) showUpdatesModal(updates);
     } catch (e) {
-      document.getElementById('error-msg').textContent = t('שגיאה בטעינת התוספים: {msg}', { msg: e.message });
-      show('error');
+      showLoadError(e);
     }
     hide('loading');
     refreshBtn.classList.remove('spinning');
@@ -1633,9 +1637,11 @@
         const res = await apiFetch(withAppVersion(`${API}/categories/${encodeURIComponent(slug)}`));
         if (res.status !== 200) throw new Error(`HTTP ${res.status}`);
         categoryCache.set(slug, JSON.parse(res.body));
-      } catch {
+      } catch (e) {
         hide('loading');
-        setViewTitle(name || t('קטגוריה'), t('שגיאה בטעינת הקטגוריה — נסו לרענן'));
+        setViewTitle(name || t('קטגוריה'), isOfflineError(e)
+          ? t('אין חיבור לאינטרנט — הקטגוריה תיטען כשהמחשב יתחבר')
+          : t('שגיאה בטעינת הקטגוריה — נסו לרענן'));
         fillGrid([]);
         return;
       }
@@ -2091,6 +2097,41 @@
 
   function show(id) { document.getElementById(id).classList.remove('hidden'); }
   function hide(id) { document.getElementById(id).classList.add('hidden'); }
+
+  // ── הודעת שגיאה בטעינה ───────────────────────────────────────────
+  // כשאין חיבור לאינטרנט מציגים הסבר פשוט במקום הודעה טכנית (SocketException
+  // וכו'), עם כפתור "נסו שוב". שאר השגיאות מוצגות כמו קודם.
+  const ERROR_ICON = '<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--color-error)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
+  const OFFLINE_ICON = '<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="2" y1="2" x2="22" y2="22"/><path d="M8.5 16.5a5 5 0 0 1 7 0"/><path d="M2 8.82a15 15 0 0 1 4.17-2.65"/><path d="M10.66 5c4.01-.36 8.14.9 11.34 3.76"/><path d="M16.85 11.25a10 10 0 0 1 2.22 1.68"/><path d="M5 13a10 10 0 0 1 5.24-2.76"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>';
+
+  // האם הכשל נובע מחוסר חיבור לרשת (ולא מתשובת שרת כמו HTTP 500).
+  function isOfflineError(e) {
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) return true;
+    const msg = String((e && e.message) || e || '');
+    if (/^HTTP \d+$/.test(msg)) return false;
+    return /SocketException|Failed host lookup|No address associated|Network is unreachable|network.*unreachable|Connection (refused|reset|failed|closed|timed out)|timed? ?out|ERR_INTERNET_DISCONNECTED|ERR_NAME_NOT_RESOLVED|ERR_NETWORK|Failed to fetch|NetworkError|HandshakeException|ClientException|errno|שגיאת רשת|Network error/i.test(msg);
+  }
+
+  function showLoadError(e) {
+    const box = document.getElementById('error');
+    const icon = document.getElementById('error-icon');
+    const body = document.getElementById('error-body');
+    if (isOfflineError(e)) {
+      box.classList.add('offline');
+      icon.innerHTML = OFFLINE_ICON;
+      body.innerHTML =
+        `<p class="offline-title">${esc(t('אין חיבור לאינטרנט'))}</p>` +
+        `<p>${esc(t('חנות התוספים צריכה אינטרנט כדי לעבוד. כשהמחשב יתחבר לאינטרנט — החנות תעבוד כרגיל.'))}</p>` +
+        `<p>${esc(t('אם המחשב הזה לא אמור להיות מחובר לאינטרנט, אפשר להסיר את התוסף, או לעבור למצב "מנותק" בהגדרות התוכנה (בהגדרות של אוצריא עצמה, לא של התוסף).'))}</p>` +
+        `<button class="btn btn-secondary error-retry" type="button">${esc(t('נסו שוב'))}</button>`;
+      body.querySelector('.error-retry').addEventListener('click', () => reload());
+    } else {
+      box.classList.remove('offline');
+      icon.innerHTML = ERROR_ICON;
+      body.innerHTML = `<p>${esc(t('שגיאה בטעינת התוספים: {msg}', { msg: (e && e.message) || '' }))}</p>`;
+    }
+    show('error');
+  }
 
   // ── מעקב תוצאת התקנה ─────────────────────────────────────────────
   // לפני ההתקנה יוצרים טוקן חד-פעמי מול ה-API של האתר, מוסרים אותו לאוצריא

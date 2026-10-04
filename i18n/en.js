@@ -21,6 +21,13 @@ window.TRANSLATIONS.en = {
   'לא נמצאו תוספים לפי הסינון.': 'No plugins match the current filter.',
   'שגיאת רשת': 'Network error',
   'שגיאה בטעינת התוספים: {msg}': 'Failed to load plugins: {msg}',
+  'אין חיבור לאינטרנט': 'No internet connection',
+  'חנות התוספים צריכה אינטרנט כדי לעבוד. כשהמחשב יתחבר לאינטרנט — החנות תעבוד כרגיל.':
+    'The Plugin Store needs the internet to work. Once this computer is connected, the store will work as usual.',
+  'אם המחשב הזה לא אמור להיות מחובר לאינטרנט, אפשר להסיר את התוסף, או לעבור למצב "מנותק" בהגדרות התוכנה (בהגדרות של אוצריא עצמה, לא של התוסף).':
+    'If this computer isn’t supposed to be connected to the internet, you can remove this plugin, or switch to “Offline” mode in the app’s settings (Otzaria’s own settings, not the plugin’s).',
+  'נסו שוב': 'Try again',
+  'אין חיבור לאינטרנט — הקטגוריה תיטען כשהמחשב יתחבר': 'No internet connection — the category will load once this computer is connected',
   '{n} תוספים': '{n} plugins',
   '{n} מתוך {total}': '{n} of {total}',
 
