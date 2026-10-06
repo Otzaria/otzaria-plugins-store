@@ -950,10 +950,7 @@
   }
 
   let allPlugins = [];
-  let installedPlugins = [];   // [{ name, version }]
-  let installedVersionByName = new Map();   // שם → גרסה מותקנת
-  let installedIdByName = new Map();        // שם → pluginId המותקן (לפתיחת התוסף)
-  let devInstalledNames = new Set();         // שמות תוספי פיתוח (לא מוצע להם עדכון)
+  let installedPlugins = [];   // [{ pluginId, name, version, isDev }] — ייחודי לפי מזהה
   let activeTag = 'all';
   let appVersion = null;       // גרסת אוצריא המותקנת, לסינון תאימות
 
@@ -1082,9 +1079,6 @@
     };
   }
 
-  // ההתאמה בין מותקן לחנות היא לפי שם. כשמותקנים אצל המשתמש כמה תוספים באותו שם
-  // (למשל גרסה ישנה ותוסף חדש שירש את שמה) — משאירים רק את בעל הגרסה הגבוהה,
-  // כדי שהעדכון יוצע פעם אחת ולא שורה לכל עותק.
   // תוסף פיתוח נטען מתיקייה שהמפתח עורך (או משרת פיתוח מקומי) — הגרסה שלו אינה
   // באה מהחנות, ואין שום משמעות להציע לו "עדכון": לחיצה עליו הייתה מתקינה את
   // הגרסה הארוזה מעל העבודה המקומית. אוצריא מחריגה אותו גם בבדיקת העדכונים
@@ -1094,30 +1088,38 @@
     return p.sourceType === 'development' || p.sourceType === 'localhost_dev';
   }
 
-  function dedupeInstalledByName(list) {
-    const byName = new Map();
-    for (const p of list || []) {
-      const prev = byName.get(p.name);
-      if (!prev || compareVersions(p.version, prev.version) > 0) byName.set(p.name, p);
-    }
-    return [...byName.values()];
+  // ההתאמה בין מותקן לחנות היא לפי המזהה (pluginUid בקטלוג = pluginId מהמניפסט),
+  // כך ששני תוספים שונים באותו שם אינם מתערבבים, ושינוי שם בחנות אינו מנתק את
+  // התוסף המותקן. רק כשאחד הצדדים חסר מזהה (תוסף ישן בקטלוג, או אוצריא ישנה
+  // שאינה מחזירה pluginId) — נופלים להתאמה לפי שם, כמו שהיה.
+  function matchesInstalled(p, inst) {
+    if (p.pluginUid && inst.pluginId) return p.pluginUid === inst.pluginId;
+    return p.name === inst.name;
   }
 
-  // קולט את תשובת plugin.listInstalled לתוך מפות המצב. ה-pluginId נשמר כדי
-  // שנוכל לפתוח את התוסף בפועל (plugin.openOther) — ההתאמה בחנות היא לפי שם,
-  // אבל הפתיחה חייבת את המזהה האמיתי כפי שהוא מותקן אצל המשתמש.
+  function installedKey(inst) {
+    return inst.pluginId ? 'id:' + inst.pluginId : 'name:' + inst.name;
+  }
+
+  // כשמותקנים כמה עותקים של אותו תוסף (אותו מזהה) — משאירים רק את בעל הגרסה
+  // הגבוהה, כדי שהעדכון יוצע פעם אחת ולא שורה לכל עותק. עותק פיתוח מסמן את
+  // התוסף כולו כתוסף פיתוח (isDev), כדי שלא יוצע לו עדכון.
+  function dedupeInstalled(list) {
+    const byKey = new Map();
+    const devKeys = new Set();
+    for (const p of list || []) {
+      const key = installedKey(p);
+      if (isDevInstall(p)) devKeys.add(key);
+      const prev = byKey.get(key);
+      if (!prev || compareVersions(p.version, prev.version) > 0) byKey.set(key, p);
+    }
+    return [...byKey].map(([key, p]) => ({ ...p, isDev: devKeys.has(key) }));
+  }
+
+  // קולט את תשובת plugin.listInstalled. ה-pluginId משמש גם להתאמה מול החנות
+  // וגם לפתיחת התוסף בפועל (plugin.openOther).
   function adoptInstalledList(list) {
-    installedPlugins = dedupeInstalledByName(list);
-    installedVersionByName = new Map();
-    installedIdByName = new Map();
-    devInstalledNames = new Set();
-    installedPlugins.forEach(p => {
-      installedVersionByName.set(p.name, p.version);
-      if (p.pluginId) installedIdByName.set(p.name, p.pluginId);
-    });
-    (list || []).forEach(p => {
-      if (isDevInstall(p)) devInstalledNames.add(p.name);
-    });
+    installedPlugins = dedupeInstalled(list);
   }
 
   // רענון רשימת המותקנים מאוצריא בלבד (בלי טעינת הקטלוג מחדש) — אחרי התקנה
@@ -1129,8 +1131,14 @@
     } catch { /* נשארים עם המצב שידוע לנו */ }
   }
 
+  // הרשומה המותקנת שתואמת לתוסף מהקטלוג, או null
+  function findInstalled(p) {
+    return (p && installedPlugins.find(inst => matchesInstalled(p, inst))) || null;
+  }
+
   function installedIdOf(p) {
-    return (p && installedIdByName.get(p.name)) || null;
+    const inst = findInstalled(p);
+    return (inst && inst.pluginId) || null;
   }
 
   // פתיחת תוסף מותקן. pluginId שאינו מותקן מחזיר error.not_found; כל שאר
@@ -1146,9 +1154,9 @@
 
   function getAvailableUpdates() {
     return installedPlugins.flatMap(inst => {
-      if (isDevInstall(inst)) return [];
+      if (inst.isDev) return [];
       // מציגים עדכון רק אם הגרסה בחנות גבוהה מהמותקנת — לא אם המותקנת גבוהה יותר.
-      const newer = allPlugins.find(p => p.name === inst.name && compareVersions(p.version, inst.version) > 0);
+      const newer = allPlugins.find(p => matchesInstalled(p, inst) && compareVersions(p.version, inst.version) > 0);
       return newer ? [{ installed: inst, plugin: newer }] : [];
     });
   }
@@ -1241,9 +1249,8 @@
 
     const knownSet = new Set(known);
     // תוסף שכבר מותקן אצל המשתמש אינו "חדש בחנות", גם אם נכנס לקטלוג עכשיו
-    const installedNames = new Set(installedPlugins.map(p => p.name));
     const newPlugins = allPlugins.filter(p =>
-      !knownSet.has(p.id) && !installedNames.has(p.name));
+      !knownSet.has(p.id) && !findInstalled(p));
     if (newPlugins.length > 0) showNewToast(newPlugins);
   }
 
@@ -1283,9 +1290,6 @@
     show('loading');
     allPlugins = [];
     installedPlugins = [];
-    installedVersionByName = new Map();
-    installedIdByName = new Map();
-    devInstalledNames = new Set();
     try {
       const [catalogRes, installedRes, homeRes] = await Promise.all([
         apiFetch(withAppVersion(API)),
@@ -1436,10 +1440,10 @@
 
   // "לא מותקן או שיש לו עדכון" — הבסיס לסוויץ' "הסתר מותקנים".
   function isVisibleInStore(p) {
-    const inst = installedVersionByName.get(p.name);
-    if (inst === undefined) return true;
-    if (devInstalledNames.has(p.name)) return false;
-    return compareVersions(p.version, inst) > 0;
+    const inst = findInstalled(p);
+    if (!inst) return true;
+    if (inst.isDev) return false;
+    return compareVersions(p.version, inst.version) > 0;
   }
 
   // מסנן אחיד לכל התצוגות: כשהסוויץ' דולק — מותקנים (ללא עדכון) מוסתרים;
@@ -1450,10 +1454,10 @@
 
   // מצב ההתקנה של תוסף אצל המשתמש: 'not_installed' | 'update' | 'installed'
   function installStateOf(p) {
-    const inst = installedVersionByName.get(p.name);
-    if (inst === undefined) return 'not_installed';
-    if (devInstalledNames.has(p.name)) return 'installed';
-    return compareVersions(p.version, inst) > 0 ? 'update' : 'installed';
+    const inst = findInstalled(p);
+    if (!inst) return 'not_installed';
+    if (inst.isDev) return 'installed';
+    return compareVersions(p.version, inst.version) > 0 ? 'update' : 'installed';
   }
 
   // ממפה רשימת תוספים מה-API (נבחרים/קטגוריה/חיפוש) לעצמים מהקטלוג המקומי —
@@ -2176,10 +2180,9 @@
   // תצוגות ישקפו מיד "מותקן ✓", בלי להמתין לרענון מלא של החנות.
   function markInstalled(plugin) {
     if (!plugin) return;
-    installedVersionByName.set(plugin.name, plugin.version);
-    const existing = installedPlugins.find(p => p.name === plugin.name);
+    const existing = findInstalled(plugin);
     if (existing) existing.version = plugin.version;
-    else installedPlugins.push({ name: plugin.name, version: plugin.version });
+    else installedPlugins.push({ pluginId: plugin.pluginUid || null, name: plugin.name, version: plugin.version, isDev: false });
   }
 
   async function createInstallToken(downloadUrl) {
