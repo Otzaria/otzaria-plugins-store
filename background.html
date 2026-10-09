@@ -108,24 +108,35 @@
     // מתעדכן לגרסה התומכת גם אם הגרסה האחרונה אינה תואמת אצלו.
     catalog = catalog.map(p => toEffectivePlugin(p, appVersion)).filter(Boolean);
 
-    // כמה תוספים מותקנים באותו שם נספרים כעדכון אחד (לפי הגרסה הגבוהה) — כמו בדף ה-UI
-    const installedRaw = installedRes.success ? installedRes.data : [];
-    const installedByName = new Map();
-    for (const p of installedRaw) {
-      const prev = installedByName.get(p.name);
-      if (!prev || compareVersions(p.version, prev.version) > 0) installedByName.set(p.name, p);
-    }
-    const installed = [...installedByName.values()];
-    const installedNames = new Set(installed.map(p => p.name));
+    // ההתאמה בין מותקן לחנות לפי מזהה (pluginUid בקטלוג = pluginId מהמניפסט) —
+    // כמו בדף ה-UI. רק כשאחד הצדדים חסר מזהה (תוסף ישן בקטלוג / אוצריא ישנה)
+    // נופלים להתאמה לפי שם.
+    const matchesInstalled = (p, inst) =>
+      (p.pluginUid && inst.pluginId) ? p.pluginUid === inst.pluginId : p.name === inst.name;
 
-    // עדכונים: גרסה בחנות גבוהה מהמותקנת. תוסף פיתוח (sourceType, מ-0.9.98)
-    // מוחרג — הגרסה שלו אינה באה מהחנות, ואוצריא מחריגה אותו גם בבדיקת
-    // העדכונים הפנימית שלה. באוצריא ישנה שאין בה את השדה הכל נחשב packaged.
+    // תוסף פיתוח (sourceType, מ-0.9.98) מוחרג מעדכונים — הגרסה שלו אינה באה
+    // מהחנות, ואוצריא מחריגה אותו גם בבדיקת העדכונים הפנימית שלה. באוצריא ישנה
+    // שאין בה את השדה הכל נחשב packaged.
     const isDevInstall = p =>
       p.sourceType === 'development' || p.sourceType === 'localhost_dev';
+
+    // כמה עותקים מותקנים של אותו תוסף (אותו מזהה) נספרים כעדכון אחד (לפי הגרסה
+    // הגבוהה); עותק פיתוח מסמן את התוסף כולו כתוסף פיתוח — כמו בדף ה-UI.
+    const installedRaw = installedRes.success ? installedRes.data : [];
+    const installedByKey = new Map();
+    const devKeys = new Set();
+    for (const p of installedRaw) {
+      const key = p.pluginId ? 'id:' + p.pluginId : 'name:' + p.name;
+      if (isDevInstall(p)) devKeys.add(key);
+      const prev = installedByKey.get(key);
+      if (!prev || compareVersions(p.version, prev.version) > 0) installedByKey.set(key, p);
+    }
+    const installed = [...installedByKey].map(([key, p]) => ({ ...p, isDev: devKeys.has(key) }));
+
+    // עדכונים: גרסה בחנות גבוהה מהמותקנת
     const updates = installed.filter(inst =>
-      !isDevInstall(inst) &&
-      catalog.some(p => p.name === inst.name && compareVersions(p.version, inst.version) > 0));
+      !inst.isDev &&
+      catalog.some(p => matchesInstalled(p, inst) && compareVersions(p.version, inst.version) > 0));
 
     // תוספים חדשים בחנות מאז הבדיקה הקודמת (לא מותקנים אצל המשתמש)
     const seen = readJson(BG_SEEN_KEY);
@@ -133,7 +144,8 @@
     let newPlugins = [];
     if (Array.isArray(seen)) {
       const seenSet = new Set(seen);
-      newPlugins = catalog.filter(p => !seenSet.has(p.id) && !installedNames.has(p.name));
+      newPlugins = catalog.filter(p =>
+        !seenSet.has(p.id) && !installed.some(inst => matchesInstalled(p, inst)));
     }
     // תמיד מעדכנים את ה-baseline (בטעינה ראשונה רק שומרים, בלי הודעת "חדש")
     writeJson(BG_SEEN_KEY, currentIds);
