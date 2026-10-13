@@ -56,7 +56,11 @@
   }
 
   // תוסף אפקטיבי שגרסתו היא הגרסה התואמת הגבוהה ביותר; null אם אין אף תואמת.
-  function toEffectivePlugin(p, appVersion) {
+  // תוסף שהצהיר על "platforms" בלי מערכת ההפעלה הנוכחית אינו מוצע (כמו בדף ה-UI).
+  function toEffectivePlugin(p, appVersion, appPlatform) {
+    if (appPlatform && Array.isArray(p.platforms) && p.platforms.length && !p.platforms.includes(appPlatform)) {
+      return null;
+    }
     const best = pluginVersionCandidates(p)
       .filter(v => isVersionCompatible(v, appVersion))
       .sort((a, b) => compareVersions(b.version, a.version))[0];
@@ -91,6 +95,7 @@
 
   async function checkAndNotify(payload) {
     const appVersion = payload && payload.app ? payload.app.version : null;
+    const appPlatform = payload && payload.app ? payload.app.platform : null;
 
     // משיכת הקטלוג ורשימת המותקנים במקביל. הקטלוג נמשך עם גרסת אוצריא, כך שהשרת
     // מחזיר כל תוסף בגרסה התואמת ומשמיט תוספים ללא גרסה תואמת; toEffectivePlugin
@@ -106,7 +111,7 @@
     // לכל תוסף בוחרים את הגרסה התואמת הגבוהה ביותר (כמו בדף ה-UI). תוסף ללא אף
     // גרסה תואמת אינו נחשב לעדכון/חדש; עדכון נמדד מול הגרסה התואמת — כך המשתמש
     // מתעדכן לגרסה התומכת גם אם הגרסה האחרונה אינה תואמת אצלו.
-    catalog = catalog.map(p => toEffectivePlugin(p, appVersion)).filter(Boolean);
+    catalog = catalog.map(p => toEffectivePlugin(p, appVersion, appPlatform)).filter(Boolean);
 
     // ההתאמה בין מותקן לחנות לפי מזהה (pluginUid בקטלוג = pluginId מהמניפסט) —
     // כמו בדף ה-UI. רק כשאחד הצדדים חסר מזהה (תוסף ישן בקטלוג / אוצריא ישנה)

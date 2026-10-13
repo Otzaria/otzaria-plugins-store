@@ -953,6 +953,7 @@
   let installedPlugins = [];   // [{ pluginId, name, version, isDev }] — ייחודי לפי מזהה
   let activeTag = 'all';
   let appVersion = null;       // גרסת אוצריא המותקנת, לסינון תאימות
+  let appPlatform = null;      // מערכת ההפעלה ('windows'/'linux'/'macos'/'android'/'ios'), לסינון platforms
 
   // ── מצב תצוגה (אצירה) ──
   // storeHome — תשובת /api/plugins/store-home (null אם נכשלה: נופלים ל"כל התוספים").
@@ -1058,7 +1059,17 @@
   // ממפה תוסף מהקטלוג ל"תוסף אפקטיבי" שגרסתו וקישור-ההורדה שלו הם הגרסה התואמת
   // הגבוהה ביותר (לא בהכרח האחרונה). מחזיר null אם אין אף גרסה תואמת — אז התוסף
   // לא יוצג ולא ייחשב לעדכון.
+  // תוסף שהצהיר ב-manifest על "platforms" (החנות מחזירה את השדה ב-/api/plugins)
+  // ואינו כולל את מערכת ההפעלה הנוכחית — לא יעבוד כאן, ולכן אינו מוצג. רשימה
+  // ריקה/חסרה (תוסף שלא הגביל את עצמו, או אתר ותיק בלי השדה) או פלטפורמה לא
+  // ידועה — לא מסתירים דבר.
+  function supportsAppPlatform(p) {
+    if (!appPlatform || !Array.isArray(p.platforms) || p.platforms.length === 0) return true;
+    return p.platforms.includes(appPlatform);
+  }
+
   function toEffectivePlugin(p) {
+    if (!supportsAppPlatform(p)) return null;
     const best = selectBestVersion(p, appVersion);
     if (!best) return null;
     const latest = latestVersionOf(p);
@@ -1397,6 +1408,7 @@
     Otzaria.on('plugin.boot', p => {
       if (p && p.theme) applyTheme(p.theme);
       if (p && p.app) setLanguage(p.app.language, p.app.locale, p.app.textDirection);
+      if (p && p.app && p.app.platform) appPlatform = p.app.platform;
     });
     // עדכון חי כשהמשתמש מחליף ערכת צבעים/מצב כהה (הרשאה: events.subscribe:theme.changed)
     Otzaria.on('theme.changed', applyTheme);
@@ -1423,7 +1435,10 @@
     // גרסת אוצריא קבועה לאורך הריצה — מספיק למשוך פעם אחת לפני הטעינה
     try {
       const info = await Otzaria.call('app.getInfo', {});
-      if (info && info.success) appVersion = info.data.version;
+      if (info && info.success) {
+        appVersion = info.data.version;
+        if (info.data.platform) appPlatform = info.data.platform;
+      }
     } catch {}
     // שחזור "הסתר מותקנים" מאחסון התוסף (storage.get שורד בין פתיחות,
     // בניגוד ל-localStorage שמתאפס עם ה-webview) — לפני הרינדור הראשון.
