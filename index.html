@@ -164,7 +164,7 @@
     #search::placeholder { color: var(--color-text-faint); }
     #search:focus { border-color: var(--color-on-surface); }
 
-    #status-filter {
+    #status-filter, #sort-select {
       padding: 8px 12px;
       border: 1px solid var(--color-outline-strong);
       border-radius: var(--radius-8);
@@ -848,6 +848,11 @@
     <option value="stable" data-t="יציב">יציב</option>
     <option value="beta" data-t="בטא">בטא</option>
     <option value="experimental" data-t="ניסיוני">ניסיוני</option>
+  </select>
+  <select id="sort-select" data-t-title="מיון" title="מיון">
+    <option value="recommended" data-t="מומלצים">מומלצים</option>
+    <option value="newest" data-t="החדשים ביותר">החדשים ביותר</option>
+    <option value="updated" data-t="עודכנו לאחרונה">עודכנו לאחרונה</option>
   </select>
   <label id="hide-installed-wrap" data-t-title="הסתרת תוספים שכבר מותקנים אצלך (למעט כאלה עם עדכון זמין)" title="הסתרת תוספים שכבר מותקנים אצלך (למעט כאלה עם עדכון זמין)">
     <input type="checkbox" id="hide-installed">
@@ -1566,6 +1571,7 @@
     hide('view-title');
     if (currentView.type === 'home') {
       hide('tags-wrap'); hide('grid'); hide('empty');
+      document.getElementById('sort-select').value = 'recommended';
       renderHome();
     } else if (currentView.type === 'category') {
       hide('tags-wrap'); hide('home');
@@ -1585,12 +1591,22 @@
     show('view-title');
   }
 
+  // מיון כמו באתר: 'recommended' — הסדר שהגיע (אצירה/רלוונטיות); 'newest' — פרסום ראשון;
+  // 'updated' — החלפת הקובץ האחרונה. בלי תאריך (שרת ישן) — בסוף; sort יציב שומר על הסדר בשוויון.
+  const SORT_DATE_FIELD = { newest: 'publishedAt', updated: 'fileUpdatedAt' };
+
+  function sortList(list) {
+    const field = SORT_DATE_FIELD[document.getElementById('sort-select').value];
+    if (!field) return list;
+    return [...list].sort((a, b) => (b[field] || '').localeCompare(a[field] || ''));
+  }
+
   function fillGrid(list) {
     const grid = document.getElementById('grid');
     grid.innerHTML = '';
     if (!list.length) { show('empty'); hide('grid'); return; }
     hide('empty'); show('grid');
-    list.forEach(p => grid.appendChild(makeCard(p)));
+    sortList(list).forEach(p => grid.appendChild(makeCard(p)));
   }
 
   // ── דף הבית האצור ──
@@ -1920,7 +1936,7 @@
             ${p.updatedAt ? `
             <div class="info-cell">
               <div class="info-label">${esc(t('עודכן'))}</div>
-              <div class="info-value">${esc(formatDate(p.originalDate || p.updatedAt))}</div>
+              <div class="info-value">${esc(formatDate(p.fileUpdatedAt || p.originalDate || p.updatedAt))}</div>
             </div>` : ''}
             ${p.compatibleWith ? `
             <div class="info-cell full">
@@ -2326,6 +2342,13 @@
     searchTimer = setTimeout(renderCurrentView, 300);
   });
   document.getElementById('status-filter').addEventListener('change', renderCurrentView);
+  // בדף הבית אין רשימה למיין — מיון בפועל עובר ל"כל התוספים"
+  document.getElementById('sort-select').addEventListener('change', (e) => {
+    if (!searchQuery && currentView.type === 'home' && e.target.value !== 'recommended') {
+      currentView = { type: 'all' };
+    }
+    renderCurrentView();
+  });
 
   // סוויץ' "הסתר מותקנים" — שמירת הבחירה + רענון; אם דף הבית התרוקן עוברים לרשימה
   const hideInstalledEl = document.getElementById('hide-installed');

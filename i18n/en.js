@@ -15,6 +15,10 @@ window.TRANSLATIONS.en = {
   'הסתרת תוספים שכבר מותקנים אצלך (למעט כאלה עם עדכון זמין)':
     'Hide plugins you already have installed (except those with an available update)',
   'הסתר מותקנים': 'Hide installed',
+  'מיון': 'Sort',
+  'מומלצים': 'Recommended',
+  'החדשים ביותר': 'Newest',
+  'עודכנו לאחרונה': 'Recently updated',
 
   // ── מצבים ומונים ──
   'טוען תוספים...': 'Loading plugins…',
