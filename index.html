@@ -54,9 +54,9 @@
       /* גדלי פס הכותרת — px קשיח בכוונה (DESIGN_GUIDE § סרגל כותרת התוסף):
          הפס חייב להתיישר עם הסרגל של אוצריא ולא לגדול עם גופן הספר */
       --fs-topbar-title: 16px; --fs-topbar-sub: 12px;
-      --radius-3: 3px; --radius-6: 6px; --radius-8: 8px; --radius-10: 10px;
-      --radius-12: 12px; --radius-14: 14px; --radius-16: 16px; --radius-18: 18px;
-      --radius-20: 20px; --radius-24: 24px;
+      /* פינות — אוצריא עברה לרדיוס אחיד של 8 לכל רכיב (AppTokens.radius);
+         3/6 נשארים רק לאלמנטים זעירים (פס דירוג, scrollbar, כפתור אייקון) */
+      --radius-3: 3px; --radius-6: 6px; --radius-8: 8px;
       /* טקסט/אייקון מעל שכבה חוצצת כהה (lightbox) — תמיד בהיר, גם במצב כהה */
       --color-on-scrim: #fff;
     }
@@ -127,7 +127,7 @@
 
     #refresh-btn {
       width: 32px; height: 32px;
-      border-radius: 50%;
+      border-radius: var(--radius-8);
       border: 1.5px solid var(--color-outline-strong);
       background: var(--color-surface-soft);
       cursor: pointer;
@@ -189,7 +189,7 @@
     #hide-installed-wrap input { display: none; }
     #hide-installed-wrap .switch {
       width: 34px; height: 18px;
-      border-radius: var(--radius-20);
+      border-radius: var(--radius-8);
       background: var(--color-outline-strong);
       position: relative;
       transition: background .15s;
@@ -217,7 +217,7 @@
       display: block;
       margin: 0 20px 10px;
       padding: 4px 14px;
-      border-radius: var(--radius-20);
+      border-radius: var(--radius-8);
       font-size: var(--fs-12);
       font-weight: 600;
       cursor: pointer;
@@ -229,7 +229,7 @@
     #tags-toggle:hover { border-color: var(--color-on-surface); color: var(--color-on-surface); }
     .tag-btn {
       padding: 4px 12px;
-      border-radius: var(--radius-20);
+      border-radius: var(--radius-8);
       font-size: var(--fs-12);
       font-weight: 500;
       cursor: pointer;
@@ -251,7 +251,7 @@
 
     .card {
       background: var(--color-surface-card);
-      border-radius: var(--radius-14);
+      border-radius: var(--radius-8);
       border: 1px solid var(--color-outline);
       overflow: hidden;
       display: flex;
@@ -284,7 +284,7 @@
     .card-badges { display: flex; gap: 6px; flex-wrap: wrap; }
     .badge {
       padding: 2px 10px;
-      border-radius: var(--radius-20);
+      border-radius: var(--radius-8);
       font-size: var(--fs-11);
       font-weight: 700;
     }
@@ -360,7 +360,7 @@
     .card-tags { display: flex; flex-wrap: wrap; gap: 4px; }
     .card-tag {
       padding: 2px 8px;
-      border-radius: var(--radius-20);
+      border-radius: var(--radius-8);
       font-size: var(--fs-11);
       background: var(--color-surface-muted);
       color: var(--color-text-muted);
@@ -370,7 +370,7 @@
     .btn {
       flex: 1;
       padding: 8px 12px;
-      border-radius: var(--radius-20);
+      border-radius: var(--radius-8);
       font-size: var(--fs-13);
       font-weight: 700;
       cursor: pointer;
@@ -432,7 +432,7 @@
     }
     #updates-modal {
       background: var(--color-surface-card);
-      border-radius: var(--radius-18);
+      border-radius: var(--radius-8);
       border: 1px solid var(--color-outline);
       width: 100%;
       max-width: 480px;
@@ -473,7 +473,7 @@
     .update-btn {
       flex-shrink: 0;
       padding: 6px 16px;
-      border-radius: var(--radius-20);
+      border-radius: var(--radius-8);
       font-size: var(--fs-12);
       font-weight: 700;
       cursor: pointer;
@@ -493,7 +493,7 @@
     }
     .update-all-btn {
       padding: 8px 20px;
-      border-radius: var(--radius-20);
+      border-radius: var(--radius-8);
       font-size: var(--fs-13);
       font-weight: 700;
       cursor: pointer;
@@ -531,7 +531,7 @@
 
     .detail-header {
       background: var(--color-surface-card);
-      border-radius: var(--radius-16);
+      border-radius: var(--radius-8);
       border: 1px solid var(--color-outline);
       padding: 24px;
       margin-bottom: 16px;
@@ -548,7 +548,7 @@
       width: 100%;
       aspect-ratio: 4/3;
       object-fit: cover;
-      border-radius: var(--radius-12);
+      border-radius: var(--radius-8);
       background: var(--color-surface-card);
     }
     .detail-main-img.is-default { object-fit: contain; padding: 24px; }
@@ -556,7 +556,7 @@
       width: 100%;
       aspect-ratio: 4/3;
       background: linear-gradient(135deg, var(--color-placeholder), var(--color-outline));
-      border-radius: var(--radius-12);
+      border-radius: var(--radius-8);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -571,7 +571,7 @@
     .detail-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
     .detail-install-btn {
       padding: 10px 24px;
-      border-radius: var(--radius-24);
+      border-radius: var(--radius-8);
       font-size: var(--fs-14);
       font-weight: 700;
       cursor: pointer;
@@ -603,7 +603,7 @@
 
     .detail-card {
       background: var(--color-surface-card);
-      border-radius: var(--radius-14);
+      border-radius: var(--radius-8);
       border: 1px solid var(--color-outline);
       padding: 18px;
     }
@@ -621,7 +621,7 @@
     .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .info-cell {
       background: var(--color-surface-soft);
-      border-radius: var(--radius-10);
+      border-radius: var(--radius-8);
       padding: 10px 12px;
     }
     .info-cell.full { grid-column: 1 / -1; }
@@ -631,7 +631,7 @@
     .detail-tags { display: flex; flex-wrap: wrap; gap: 8px; }
     .detail-tag {
       padding: 4px 14px;
-      border-radius: var(--radius-20);
+      border-radius: var(--radius-8);
       font-size: var(--fs-12);
       font-weight: 500;
       background: var(--color-surface-muted);
@@ -644,7 +644,7 @@
 
     .screenshots-section {
       background: var(--color-surface-card);
-      border-radius: var(--radius-14);
+      border-radius: var(--radius-8);
       border: 1px solid var(--color-outline);
       padding: 18px;
       margin-bottom: 16px;
@@ -672,7 +672,7 @@
       width: 220px;
       aspect-ratio: 16/11;
       object-fit: cover;
-      border-radius: var(--radius-10);
+      border-radius: var(--radius-8);
       border: 1px solid var(--color-outline);
       cursor: pointer;
       scroll-snap-align: start;
@@ -694,7 +694,7 @@
     #lightbox img {
       max-width: 100%;
       max-height: 90vh;
-      border-radius: var(--radius-10);
+      border-radius: var(--radius-8);
       object-fit: contain;
     }
     #lightbox-close {
@@ -723,7 +723,7 @@
       transform: translateX(-50%);
       background: var(--color-accent);
       color: var(--color-on-accent);
-      border-radius: var(--radius-14);
+      border-radius: var(--radius-8);
       padding: 12px;
       padding-inline: 14px 18px;
       display: flex;
@@ -743,7 +743,7 @@
     #new-toast .toast-view {
       flex-shrink: 0;
       padding: 6px 18px;
-      border-radius: var(--radius-20);
+      border-radius: var(--radius-8);
       font-size: var(--fs-13);
       font-weight: 700;
       cursor: pointer;
@@ -777,7 +777,7 @@
       align-items: center;
       gap: 6px;
       padding: 6px 14px;
-      border-radius: var(--radius-20);
+      border-radius: var(--radius-8);
       font-size: var(--fs-13);
       font-weight: 600;
       cursor: pointer;
