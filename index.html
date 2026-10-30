@@ -501,7 +501,11 @@
     }
 
     /* שורת המטא (כמו PluginMeta באתר): בלי מפרידים "·" — לכל פריט סימן משלו */
+    /* מעל ה-::after של כפתור השם — כדי שה-title של הדירוג וההורדות יוצג בריחוף
+       (לחיצה כאן עדיין פותחת את הפרטים: המאזין על הכרטיס כולו) */
     .plugin-meta {
+      position: relative;
+      z-index: 1;
       display: flex;
       flex-wrap: wrap;
       align-items: center;
@@ -988,7 +992,18 @@
     }
     #new-toast .toast-icon { display: flex; flex-shrink: 0; margin-inline-end: 4px; color: var(--color-inverse-primary); }
     #new-toast .toast-icon svg { width: 22px; height: 22px; }
-    #new-toast .toast-text { font-size: var(--fs-14); font-weight: 600; flex: 1; white-space: nowrap; margin-inline-end: 6px; }
+    /* במסך צר הטקסט נחתך ב-"…" — הכפתורים נשארים תמיד בתוך ההודעה */
+    #new-toast .toast-text {
+      flex: 1;
+      min-width: 0;
+      margin-inline-end: 6px;
+      font-size: var(--fs-14);
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    #new-toast .toast-view, #new-toast .toast-close { flex-shrink: 0; }
     #new-toast .toast-view { color: var(--color-inverse-primary); font-size: var(--fs-14); }
     #new-toast .toast-view:hover { background: color-mix(in srgb, var(--color-inverse-primary) 12%, transparent); }
     #new-toast .toast-close { width: 36px; height: 36px; color: var(--color-on-inverse-surface); }
@@ -1008,7 +1023,17 @@
     .home-section-head-text { min-width: 0; }
     .home-section-desc { margin-top: 10px; font-size: var(--fs-14); color: var(--color-on-surface-variant); }
     .home-see-all { flex-shrink: 0; white-space: nowrap; }
-    .home-row { display: flex; gap: 16px; overflow-x: auto; padding-bottom: 8px; scroll-snap-type: x proximity; }
+    /* overflow-x חותך גם אנכית — ריפוד של 4px (ומרווח שלילי שווה, בלי תזוזה) משאיר
+       מקום לטבעת הפוקוס של הכרטיס (2px + מרווח 2px) */
+    .home-row {
+      display: flex;
+      gap: 16px;
+      overflow-x: auto;
+      margin: -4px;
+      padding: 4px 4px 12px;
+      scroll-padding-inline: 4px;
+      scroll-snap-type: x proximity;
+    }
     .home-row .card { width: 280px; flex-shrink: 0; scroll-snap-align: start; }
     .home-footer-strip {
       display: flex;
@@ -2076,7 +2101,7 @@
       <div class="card-head">
         ${pluginIconHtml(p)}
         <div class="card-head-text">
-          <h3 class="card-title"><button class="card-link" type="button" dir="auto" title="${esc(p.name)}"><span class="card-title-text">${esc(p.name)}</span></button></h3>
+          <h3 class="card-title"><button class="card-link" type="button" dir="auto"><span class="card-title-text">${esc(p.name)}</span></button></h3>
           ${pluginMetaHtml(p)}
         </div>
       </div>
@@ -2283,7 +2308,8 @@
 
   // "גרסה 1.2.0" — המספר ב-<bdi>, כדי שהנקודות לא יתערבבו בטקסט מימין לשמאל
   function versionHtml(v) {
-    return esc(t('גרסה {v}')).replace('{v}', `<bdi>${esc(v)}</bdi>`);
+    // פונקציית החלפה ולא מחרוזת — כך תווים כמו $& בגרסה אינם מתפרשים כתבנית
+    return esc(t('גרסה {v}')).replace('{v}', () => `<bdi>${esc(v)}</bdi>`);
   }
 
   // שורת המטא של כרטיס (כמו PluginMeta באתר):  ★ 4.6 (12)  ⤓ 2,473  גרסה 1.2.0 [בטא]
