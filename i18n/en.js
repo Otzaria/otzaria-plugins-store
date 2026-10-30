@@ -8,6 +8,7 @@ window.TRANSLATIONS.en = {
   'חנות תוספים': 'Plugin Store',
   'רענן רשימה': 'Refresh list',
   'חיפוש לפי שם, תיאור או תגית...': 'Search by name, description or tag…',
+  'חיפוש תוספים': 'Search plugins',
   'כל הסטטוסים': 'All statuses',
   'יציב': 'Stable',
   'בטא': 'Beta',
@@ -22,7 +23,8 @@ window.TRANSLATIONS.en = {
 
   // ── מצבים ומונים ──
   'טוען תוספים...': 'Loading plugins…',
-  'לא נמצאו תוספים לפי הסינון.': 'No plugins match the current filter.',
+  'לא נמצאו תוספים': 'No plugins found',
+  'נסו לשנות את החיפוש או את הסינון.': 'Try changing the search or the filters.',
   'שגיאת רשת': 'Network error',
   'שגיאה בטעינת התוספים: {msg}': 'Failed to load plugins: {msg}',
   'אין חיבור לאינטרנט': 'No internet connection',
@@ -36,8 +38,9 @@ window.TRANSLATIONS.en = {
   '{n} מתוך {total}': '{n} of {total}',
 
   // ── ניווט ותצוגות ──
+  'קטגוריות': 'Categories',
   'בית': 'Home',
-  'כל התוספים ({n})': 'All plugins ({n})',
+  'כל התוספים': 'All plugins',
   'תוספים נבחרים': 'Featured',
   'לכל הקטגוריה ({n}) ←': 'See all ({n}) →',
   'לא מצאתם את מה שחיפשתם? ': 'Didn’t find what you were looking for? ',
@@ -52,16 +55,15 @@ window.TRANSLATIONS.en = {
 
   // ── כרטיס ותגיות ──
   'גרסה {v}': 'Version {v}',
-  '{n} הורדות': '{n} downloads',
   'כמות הורדות': 'Download count',
-  // סוגריים סביב מספר המדרגים בתגית הדירוג
+  // סוגריים סביב מספר — מדרגים בשורת המטא, תוספים בשבב קטגוריה
   '({n})': '({n})',
   'דירוג ממוצע מתוך {n} מדרגים': 'Average rating from {n} ratings',
 
   // ── דף פרטים ──
-  // חץ החזרה — מצביע לכיוון הפוך בין rtl ל-ltr
-  '→': '←',
   'חזרה לחנות': 'Back to store',
+  'דירוג': 'Rating',
+  'תיאור': 'Description',
   'מידע כללי': 'General info',
   'גרסה': 'Version',
   'סטטוס': 'Status',
@@ -72,7 +74,7 @@ window.TRANSLATIONS.en = {
   'תאימות': 'Compatibility',
   'חיבור אינטרנט': 'Internet connection',
   'נדרש': 'Required',
-  '✓ לא נדרש': '✓ Not required',
+  'לא נדרש': 'Not required',
   'שים לב': 'Note',
   'מוצגת הגרסה התואמת לגרסת אוצריא שלך. קיימת גרסה חדשה יותר ({v}) הדורשת גרסת אוצריא מתקדמת יותר.':
     'Showing the version compatible with your Otzaria build. A newer version ({v}) exists but requires a newer Otzaria.',
