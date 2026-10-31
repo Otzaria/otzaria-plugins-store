@@ -7,86 +7,130 @@
   <!-- מילוני התרגום מוטמעים בתוסף (ללא רשת). שפה ללא מילון נשארת בעברית. -->
   <script src="i18n/en.js"></script>
   <style>
-    /* ── טוקני עיצוב (ערכים זהים למקור) ── */
+    /* ── טוקני עיצוב ──
+       הצבעים בשמות התפקידים של Material 3 — אותם שמות כמו ב-colorScheme של אוצריא,
+       ו-applyTheme ממלא אותם מה-theme האמיתי. הערכים כאן הם ברירת מחדל בלבד (מארח
+       שאינו שולח theme): הפלטה של אתר החנות (otzaria.org/plugins), כדי שגם אז התוסף
+       ייראה כמו האתר. ── */
     :root {
-      --color-surface: #f7f3ee;
-      --color-surface-card: #fff;
-      --color-surface-soft: #faf7f3;
-      --color-surface-muted: #f0ece8;
+      /* משטחים: רקע הדף, ומעליו הכרטיסים (surface) — שטוחים, בלי מסגרת ובלי צל */
+      --color-background: #f8f1ea;
+      --color-surface: #fff8f4;
+      --color-surface-container-low: #fff1e5;
+      --color-surface-container: #f9ecdf;
       /* רקע פס הכותרת — surfaceContainerHigh של אוצריא (ראה applyTheme) */
-      --color-surface-container-high: #f0e9df;
-      --color-on-surface: #2c1b02;
-      --color-accent: #2c1b02;
-      --color-on-accent: #fff;
-      --color-primary-hover: #1a1000;
-      --color-text: #5a4020;
-      --color-text-muted: #7a6040;
-      --color-text-faint: #9a7a50;
-      --color-icon-faint: #b0956a;
-      --color-outline: #e8ddd0;
-      --color-outline-strong: #d9ccbe;
-      --color-divider: #ede4d8;
-      --color-placeholder: #f0e8dc;
-      --color-error: #8a3010;
-      --color-badge-stable-bg: #e8f0e0;
-      --color-badge-stable-fg: #3a6020;
-      --color-badge-beta-bg: #f0e8d0;
-      --color-badge-beta-fg: #7a5010;
-      --color-badge-exp-bg: #f5e8e0;
-      /* דירוגים — הכוכב המלא ומסילת הכוכבים הריקים. אין להם תפקיד מתאים
-         ב-theme של אוצריא, ולכן הם מקומיים כמו תגיות הסטטוס. */
+      --color-surface-container-high: #f3e6da;
+      --color-surface-container-highest: #ede0d4;
+      --color-on-surface: #3a2610;
+      --color-on-surface-variant: #664d33;
+      /* outline — מסגרת שדה וכפתור outlined; outline-variant — קו הפרדה, מסגרת שבב */
+      --color-outline: #817567;
+      --color-outline-variant: #d3c4b4;
+      --color-primary: #805610;
+      --color-on-primary: #fff;
+      /* secondaryContainer — כפתור טונלי, שבב נבחר, אריח אייקון, תג "יציב" */
+      --color-secondary-container: #fbdebc;
+      --color-on-secondary-container: #56442a;
+      --color-error: #ba1a1a;
+      --color-error-container: #ffdad6;
+      --color-on-error-container: #93000a;
+      /* inverse — הודעת "תוסף חדש" (snackbar של M3) */
+      --color-inverse-surface: #362f27;
+      --color-on-inverse-surface: #fcefe2;
+      --color-inverse-primary: #f4bd6f;
+      --color-scrim: #3a2610;
+      --color-shadow: #2e1c08;
+      /* טקסט/אייקון מעל שכבה חוצצת כהה (lightbox) — תמיד בהיר, גם במצב כהה */
+      --color-on-scrim: #fff;
+
+      /* תפקידים שאין להם מקבילה ב-theme של אוצריא — מקומיים, ולכן מוגדרים גם
+         ב-body.dark-mode: כוכבי הדירוג, תג "ניסיוני" (warning) ותג המאומתים (success) */
       --color-rating-star: #c98a05;
-      --color-rating-track: #ded3c4;
-      --color-shadow-card: rgba(44,27,2,.12);
-      --color-shadow-modal: rgba(44,27,2,.18);
-      --color-shadow-toast: rgba(44,27,2,.32);
-      --color-scrim: rgba(44,27,2,.4);
-      --color-scrim-dark: rgba(0,0,0,.85);
-      --color-overlay-light: rgba(255,255,255,.15);
-      --color-overlay-light-hover: rgba(255,255,255,.3);
+      --color-warning-container: #f0e8d0;
+      --color-on-warning-container: #7a5010;
+      --color-success-container: #e8f0e0;
+      --color-on-success-container: #3a6020;
+
+      /* נגזרים — שכבות מצב של M3 (ריחוף = 8% מצבע התוכן מעל המשטח), החשכה וצללים.
+         מחושבים מתוך התפקידים שלמעלה, ולכן מתעדכנים לבד עם ה-theme. */
+      --color-hover: color-mix(in srgb, var(--color-primary) 8%, transparent);
+      /* כרטיס/שבב בריחוף — cardSelectionOverlay של אוצריא: secondaryContainer ב-30%
+         מעל הכרטיס (בפלטת ברירת המחדל יוצא בדיוק צבע הריחוף של האתר) */
+      --color-surface-hover: color-mix(in srgb, var(--color-secondary-container) 30%, var(--color-surface));
+      --color-primary-hover: color-mix(in srgb, var(--color-on-primary) 8%, var(--color-primary));
+      --color-secondary-container-hover: color-mix(in srgb, var(--color-on-secondary-container) 8%, var(--color-secondary-container));
+      --color-scrim-dialog: color-mix(in srgb, var(--color-scrim) 45%, transparent);
+      --color-scrim-lightbox: color-mix(in srgb, var(--color-scrim) 88%, transparent);
+      /* נקודת הזהב של קישוט הכותרת — באתר זהב קבוע; כאן נגזרת מ-primary של ה-theme */
+      --color-ornament: color-mix(in srgb, var(--color-primary) 70%, var(--color-background));
+      --shadow-dialog: 0 16px 48px color-mix(in srgb, var(--color-shadow) 24%, transparent);
+      --shadow-toast: 0 8px 24px color-mix(in srgb, var(--color-shadow) 28%, transparent);
+
       /* גופן הממשק (DESIGN_GUIDE § טיפוגרפיה): uiFontFamily של אוצריא — sans
          שנשאר חד בגדלים קטנים. גופן הקריאה (fontFamily) הוא לטקסט ספר בלבד
          ואינו מוחל על ממשק. הערך כאן הוא ברירת מחדל למארח שאינו שולח את השדה. */
       --font-ui: 'Rubik', 'Segoe UI', system-ui, sans-serif;
-      --fs-11: 11px; --fs-12: 12px; --fs-13: 13px; --fs-14: 14px;
-      --fs-15: 15px; --fs-16: 16px; --fs-18: 18px; --fs-22: 22px;
-      --fs-24: 24px; --fs-32: 32px; --fs-40: 40px; --fs-48: 48px;
+      --fs-11: 11px; --fs-13: 13px; --fs-14: 14px; --fs-15: 15px;
+      --fs-17: 17px; --fs-18: 18px; --fs-20: 20px; --fs-26: 26px; --fs-40: 40px;
       /* גדלי פס הכותרת — px קשיח בכוונה (DESIGN_GUIDE § סרגל כותרת התוסף):
          הפס חייב להתיישר עם הסרגל של אוצריא ולא לגדול עם גופן הספר */
       --fs-topbar-title: 16px; --fs-topbar-sub: 12px;
-      /* פינות — אוצריא עברה לרדיוס אחיד של 8 לכל רכיב (AppTokens.radius);
-         3/6 נשארים רק לאלמנטים זעירים (פס דירוג, scrollbar, כפתור אייקון) */
-      --radius-3: 3px; --radius-6: 6px; --radius-8: 8px;
-      /* טקסט/אייקון מעל שכבה חוצצת כהה (lightbox) — תמיד בהיר, גם במצב כהה */
-      --color-on-scrim: #fff;
+      /* פינות — אוצריא עברה לרדיוס אחיד של 8 לכל רכיב (AppTokens.radius): כרטיס, כפתור
+         (גם כפתור אייקון), שדה, שבב, תג, חלונית. 3 נשאר רק לאלמנטים זעירים (פס דירוג,
+         scrollbar, שורת טקסט בשלד הטעינה); pill — רק למסילת המתג (ה-Switch של אוצריא) */
+      --radius-3: 3px; --radius-8: 8px; --radius-pill: 999px;
+      /* תנועה — כמו באתר: מעבר צבע 180ms בעקומה הסטנדרטית */
+      --motion: 180ms cubic-bezier(.4, 0, .2, 1);
     }
 
     /* ── מצב כהה: רוב הצבעים מגיעים מ-theme של אוצריא (applyTheme).
-       כאן רק טוקנים שה-theme אינו מספק — צללים, שכבות חוצצות, ותגיות סטטוס. ── */
+       כאן רק טוקנים שה-theme אינו מספק — דירוג ותגי מצב. ── */
     body.dark-mode {
-      --color-badge-stable-bg: #21311f;
-      --color-badge-stable-fg: #a3cf86;
-      --color-badge-beta-bg: #34301a;
-      --color-badge-beta-fg: #e0bd66;
-      --color-badge-exp-bg: #3a261c;
+      color-scheme: dark;
       --color-rating-star: #e0bd66;
-      --color-rating-track: #4a4034;
-      --color-shadow-card: rgba(0,0,0,.45);
-      --color-shadow-modal: rgba(0,0,0,.55);
-      --color-shadow-toast: rgba(0,0,0,.6);
-      --color-scrim: rgba(0,0,0,.6);
-      --color-scrim-dark: rgba(0,0,0,.88);
+      --color-warning-container: #34301a;
+      --color-on-warning-container: #e0bd66;
+      --color-success-container: #21311f;
+      --color-on-success-container: #a3cf86;
     }
 
     /* פס הכותרת קבוע והתוכן הוא שגולל — לכן העמוד עצמו אינו גולל כלל */
     html, body { height: 100%; overflow: hidden; }
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
+    /* בחירת טקסט כבויה בשלד (DESIGN_GUIDE § בחירת טקסט): לחיצה ברווח בין כרטיסים
+       לא צובעת את הדף. רק התיאורים בדף הפרטים ושדה החיפוש ניתנים לבחירה. */
     body {
       font-family: var(--font-ui);
-      background: var(--color-surface);
+      background: var(--color-background);
       color: var(--color-on-surface);
+      user-select: none;
+      -webkit-user-select: none;
     }
+    input, .detail-desc, .detail-about { user-select: text; -webkit-user-select: text; }
+    /* כפתורים ושדות — בגופן הממשק (ברירת המחדל של הדפדפן להם היא גופן מערכת) */
+    button, input, select { font-family: var(--font-ui); }
+    button { cursor: pointer; }
+    /* טבעת פוקוס אחידה למקלדת (כמו באתר: 2px primary, מרווח 2px) */
+    :focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+    svg { flex-shrink: 0; }
+    /* טקסט של המפתח (שם, תיאור — dir="auto", אולי באנגלית) מיושר לכיוון העמוד ולא
+       לכיוון הטקסט עצמו, כמו באתר: כך שם באנגלית עומד באותו קו עם השמות שלצדו */
+    html[dir="rtl"] :is(.card-link, .card-desc, .detail-name, .detail-desc, .detail-about, .update-name) { text-align: right; }
+    html[dir="ltr"] :is(.card-link, .card-desc, .detail-name, .detail-desc, .detail-about, .update-name) { text-align: left; }
+    .sr-only {
+      position: absolute;
+      width: 1px; height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
+    .hidden { display: none !important; }
+
+    /* פסי גלילה פנימיים (סרגל קטגוריות, שורות בדף הבית, צילומי מסך) — דקים */
+    .scroll-x { scrollbar-width: thin; scrollbar-color: var(--color-outline-variant) transparent; }
+    .scroll-x::-webkit-scrollbar { height: 6px; }
+    .scroll-x::-webkit-scrollbar-thumb { background: var(--color-outline-variant); border-radius: var(--radius-3); }
 
     .app-shell { display: flex; flex-direction: column; height: 100%; }
     .app-content { flex: 1; min-width: 0; overflow-y: auto; overflow-x: hidden; }
@@ -97,7 +141,7 @@
        הגדלים כאן ב-px קשיחים בכוונה (יחידות יחסיות היו מתפוצצות עם גופן ספר גדול). */
     .topbar {
       background: var(--color-surface-container-high);
-      border-bottom: 1px solid var(--color-outline);
+      border-bottom: 1px solid var(--color-outline-variant);
       height: 56px;
       padding: 0 16px;
       display: flex;
@@ -116,7 +160,7 @@
       flex: 1;
       min-width: 0;
       font-size: var(--fs-topbar-sub);
-      color: var(--color-text-muted);
+      color: var(--color-on-surface-variant);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -125,194 +169,389 @@
       .topbar { height: 44px; padding: 0 10px; }
     }
 
-    #refresh-btn {
-      width: 32px; height: 32px;
-      border-radius: var(--radius-8);
-      border: 1.5px solid var(--color-outline-strong);
-      background: var(--color-surface-soft);
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      font-size: var(--fs-16);
-      transition: background .15s, border-color .15s;
+    /* ── כפתור אייקון (רענון, סגירת חלונית, סגירת הודעה) — ריבוע בפינות 8 ── */
+    .icon-btn {
+      width: 40px; height: 40px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       flex-shrink: 0;
+      border: none;
+      border-radius: var(--radius-8);
+      background: transparent;
+      color: var(--color-on-surface-variant);
+      transition: background-color var(--motion), color var(--motion);
     }
-    #refresh-btn:hover { background: var(--color-surface-muted); border-color: var(--color-on-surface); }
-    #refresh-btn.spinning { animation: spin .7s linear infinite; }
+    .icon-btn:hover { background: var(--color-hover); color: var(--color-on-surface); }
+    .icon-btn svg { width: 24px; height: 24px; }
+    #refresh-btn { width: 36px; height: 36px; }
+    #refresh-btn svg { width: 22px; height: 22px; }
+    /* בזמן טעינה מסתובב רק הגליף, לא הכפתור */
+    #refresh-btn.spinning svg { animation: spin .7s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── כפתורים (כמו ui/Button באתר; פינות 8 כמו אוצריא) ──
+       filled — הפעולה הראשית במסך; tonal — פעולה משנית חשובה; outlined — משנית
+       רגילה; text — פעולה שקטה. גובה 36 (sm) / 40 (md) — צפוף יותר מהאתר, כמו אוצריא. */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 36px;
+      padding: 6px 16px;
+      border: 1px solid transparent;
+      border-radius: var(--radius-8);
+      background: transparent;
+      color: var(--color-primary);
+      font-size: var(--fs-13);
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: center;
+      transition: background-color var(--motion), color var(--motion), border-color var(--motion);
+    }
+    .btn svg { width: 20px; height: 20px; }
+    .btn-md { min-height: 40px; padding-inline: 20px; font-size: var(--fs-15); }
+    .btn-md svg { width: 22px; height: 22px; }
+    .btn:disabled { opacity: .6; cursor: default; }
+    .btn-filled { background: var(--color-primary); color: var(--color-on-primary); }
+    .btn-filled:hover:not(:disabled) { background: var(--color-primary-hover); }
+    .btn-tonal { background: var(--color-secondary-container); color: var(--color-on-secondary-container); }
+    .btn-tonal:hover:not(:disabled) { background: var(--color-secondary-container-hover); }
+    .btn-outlined { border-color: var(--color-outline); }
+    .btn-outlined:hover:not(:disabled), .btn-text:hover:not(:disabled) { background: var(--color-hover); }
+    .btn-text { padding-inline: 12px; }
+
+    /* ספינר קטן בתוך כפתור התקנה בזמן המתנה לתוצאה (הרווח מהטקסט — gap של הכפתור) */
+    .btn-spinner {
+      display: inline-block;
+      width: 12px; height: 12px;
+      border: 2px solid currentColor;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+
+    /* ── שדות: חיפוש ובחירה (כמו fieldStyles באתר) ──
+       מסגרת outline, בריחוף כהה יותר, ובפוקוס מסגרת primary בעובי 2px
+       (הגבול + outline פנימי של 1px). האייקון יושב בעוטף, במיקום לוגי. */
+    .field {
+      display: block;
+      width: 100%;
+      min-height: 44px;
+      border: 1px solid var(--color-outline);
+      border-radius: var(--radius-8);
+      background: var(--color-surface);
+      color: var(--color-on-surface);
+      font-size: var(--fs-14);
+      outline: none;
+      appearance: none;
+      -webkit-appearance: none;
+      transition: border-color var(--motion);
+    }
+    .field:hover { border-color: var(--color-on-surface-variant); }
+    .field:focus, .field:focus-visible {
+      border-color: var(--color-primary);
+      outline: 1px solid var(--color-primary);
+      outline-offset: -2px;
+    }
+    .field::placeholder { color: var(--color-on-surface-variant); opacity: 1; }
+    .field-icon {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      pointer-events: none;
+      color: var(--color-on-surface-variant);
+    }
+    .search-field { position: relative; flex: 1 1 260px; min-width: 0; }
+    .search-field .field { padding-inline: 46px 14px; }
+    .search-field .field-icon { inset-inline-start: 14px; width: 22px; height: 22px; }
+    /* כפתור הניקוי של שדה החיפוש — גליף close בצבע הטקסט המשני, במקום ה-× הכחול של הדפדפן */
+    .search-field .field::-webkit-search-cancel-button {
+      -webkit-appearance: none;
+      width: 18px; height: 18px;
+      margin-inline-start: 8px;
+      background: var(--color-on-surface-variant);
+      -webkit-mask: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z'/></svg>") center / contain no-repeat;
+      mask: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z'/></svg>") center / contain no-repeat;
+      cursor: pointer;
+    }
+    .select-field { position: relative; flex: none; }
+    .select-field .field { padding-inline: 14px 42px; cursor: pointer; }
+    .select-field .field-icon { inset-inline-end: 12px; width: 22px; height: 22px; }
 
     /* ── פילטרים ── */
     #filters {
-      background: var(--color-surface-card);
-      padding: 12px 20px;
-      border-bottom: 1px solid var(--color-outline);
+      padding: 16px 20px 0;
       display: flex;
       flex-wrap: wrap;
-      gap: 10px;
+      gap: 10px 12px;
       align-items: center;
     }
-    #search {
-      flex: 1;
-      min-width: 180px;
-      padding: 8px 12px;
-      border: 1px solid var(--color-outline-strong);
-      border-radius: var(--radius-8);
-      font-size: var(--fs-14);
-      background: var(--color-surface-soft);
-      color: var(--color-on-surface);
-      outline: none;
-    }
-    #search::placeholder { color: var(--color-text-faint); }
-    #search:focus { border-color: var(--color-on-surface); }
 
-    #status-filter, #sort-select {
-      padding: 8px 12px;
-      border: 1px solid var(--color-outline-strong);
-      border-radius: var(--radius-8);
-      font-size: var(--fs-14);
-      background: var(--color-surface-soft);
-      color: var(--color-on-surface);
-      outline: none;
-    }
-
-    /* ── סוויץ' "הסתר מותקנים" ── */
+    /* ── סוויץ' "הסתר מותקנים" — Switch של M3 כמו SwitchSettingsTile באוצריא ──
+       ה-input מוסתר חזותית בלבד (לא display:none), כדי שיישאר נגיש במקלדת. */
     #hide-installed-wrap {
-      display: flex;
+      position: relative;
+      display: inline-flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
+      min-height: 44px;
       font-size: var(--fs-13);
       font-weight: 600;
-      color: var(--color-text);
+      color: var(--color-on-surface);
       cursor: pointer;
       white-space: nowrap;
-      user-select: none;
     }
-    #hide-installed-wrap input { display: none; }
+    #hide-installed-wrap input {
+      position: absolute;
+      width: 1px; height: 1px;
+      opacity: 0;
+      pointer-events: none;
+    }
+    /* מסילת המתג — החריג היחיד לרדיוס 8: גלולה, כמו ה-Switch של אוצריא (COOKBOOK § Switch) */
     #hide-installed-wrap .switch {
-      width: 34px; height: 18px;
-      border-radius: var(--radius-8);
-      background: var(--color-outline-strong);
+      width: 40px; height: 24px;
+      border-radius: var(--radius-pill);
+      border: 2px solid var(--color-outline);
+      background: var(--color-surface-container-highest);
       position: relative;
-      transition: background .15s;
       flex-shrink: 0;
+      transition: background-color var(--motion), border-color var(--motion);
     }
     /* מיקום לוגי (inset-inline) — הידית נעה נכון גם ב-rtl וגם ב-ltr */
     #hide-installed-wrap .switch::after {
       content: '';
       position: absolute;
-      top: 2px;
-      inset-inline-start: 2px;
-      width: 14px; height: 14px;
+      top: 50%;
+      inset-inline-start: 4px;
+      width: 12px; height: 12px;
+      margin-top: -6px;
       border-radius: 50%;
-      background: var(--color-surface-card);
-      transition: inset-inline-start .15s;
+      background: var(--color-outline);
+      transition: inset-inline-start var(--motion), width var(--motion), height var(--motion),
+        margin var(--motion), background-color var(--motion);
     }
-    #hide-installed-wrap input:checked + .switch { background: var(--color-accent); }
-    #hide-installed-wrap input:checked + .switch::after { inset-inline-start: 18px; }
+    #hide-installed-wrap input:checked + .switch { background: var(--color-primary); border-color: var(--color-primary); }
+    #hide-installed-wrap input:checked + .switch::after {
+      inset-inline-start: 18px;
+      width: 16px; height: 16px;
+      margin-top: -8px;
+      background: var(--color-on-primary);
+    }
+    #hide-installed-wrap input:focus-visible + .switch { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+
+    /* ── שבבים (כמו ui/Chip באתר): קטגוריות, תגיות ──
+       רגיל — משטח surface ומסגרת outline-variant; נבחר — המשטח הטונלי ומסגרת primary
+       (המסגרת היא שמבדילה את המצב, לא רק הרקע). */
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+      max-width: 100%;
+      min-height: 32px;
+      padding: 0 12px;
+      border: 1px solid var(--color-outline-variant);
+      border-radius: var(--radius-8);
+      background: var(--color-surface);
+      color: var(--color-on-surface-variant);
+      font-size: var(--fs-13);
+      font-weight: 600;
+      white-space: nowrap;
+      transition: background-color var(--motion), color var(--motion), border-color var(--motion);
+    }
+    .chip:hover { border-color: var(--color-outline); color: var(--color-on-surface); background: var(--color-surface-hover); }
+    .chip.active {
+      border-color: var(--color-primary);
+      background: var(--color-secondary-container);
+      color: var(--color-on-secondary-container);
+    }
+    .chip.active:hover { background: var(--color-secondary-container-hover); }
+    .chip-count { font-size: var(--fs-11); font-weight: 400; opacity: .8; font-variant-numeric: tabular-nums; }
+
+    /* ── סרגל קטגוריות — שורה אחת נגללת במסך צר, נשברת לשורות כשיש מקום ── */
+    #cats-bar {
+      padding: 14px 20px 2px;
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+    }
+    @media (min-width: 700px) {
+      #cats-bar { flex-wrap: wrap; overflow-x: visible; }
+    }
 
     /* ── תגיות ── */
-    #tags-wrap { background: var(--color-surface-soft); border-bottom: 1px solid var(--color-divider); }
-    #tags { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 20px 6px; }
+    #tags-wrap { padding: 12px 20px 0; }
+    #tags { display: flex; flex-wrap: wrap; gap: 8px; }
     #tags.collapsed { overflow: hidden; }
-    #tags-toggle {
-      display: block;
-      margin: 0 20px 10px;
-      padding: 4px 14px;
-      border-radius: var(--radius-8);
-      font-size: var(--fs-12);
-      font-weight: 600;
-      cursor: pointer;
-      border: 1px dashed var(--color-outline-strong);
-      background: var(--color-surface-card);
-      color: var(--color-text);
-      transition: all .15s;
-    }
-    #tags-toggle:hover { border-color: var(--color-on-surface); color: var(--color-on-surface); }
-    .tag-btn {
-      padding: 4px 12px;
-      border-radius: var(--radius-8);
-      font-size: var(--fs-12);
-      font-weight: 500;
-      cursor: pointer;
-      border: 1px solid var(--color-outline-strong);
-      background: var(--color-surface-card);
-      color: var(--color-text);
-      transition: background-color .15s, color .15s, border-color .15s;
-    }
-    .tag-btn:hover { border-color: var(--color-on-surface); color: var(--color-on-surface); }
-    .tag-btn.active { background: var(--color-accent); color: var(--color-on-accent); border-color: var(--color-accent); }
+    #tags-toggle { margin-top: 6px; margin-inline-start: -12px; }
 
-    /* ── רשת כרטיסים ── */
-    #grid {
+    /* ── כרטיס תוסף (כמו PluginCard באתר) ──
+       שטוח: משטח surface בלי מסגרת ובלי צל; ריחוף = החלפת רקע בלבד (בלי הרמה).
+         [אייקון]  שם התוסף (עד 2 שורות)
+                   ★ 4.6 (12)  ⤓ 2,473  גרסה 1.2.0 [בטא]
+         תיאור קצר — תמיד בגובה שתי שורות, כדי שהכפתורים בשורת כרטיסים יתיישרו
+         [התקנה]   ← דבוק לתחתית */
+    #grid, .home-grid, .skeleton-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
       gap: 16px;
-      padding: 20px;
+    }
+    #grid { padding: 16px 20px 24px; }
+    @media (min-width: 768px) {
+      #grid, .home-grid, .skeleton-grid { gap: 20px; }
     }
 
     .card {
-      background: var(--color-surface-card);
-      border-radius: var(--radius-8);
-      border: 1px solid var(--color-outline);
-      overflow: hidden;
+      position: relative;
       display: flex;
       flex-direction: column;
-      transition: box-shadow .2s, transform .2s;
+      gap: 12px;
+      padding: 16px;
+      background: var(--color-surface);
+      border-radius: var(--radius-8);
       cursor: pointer;
+      transition: background-color var(--motion);
     }
-    .card:hover { box-shadow: 0 6px 24px var(--color-shadow-card); transform: translateY(-2px); }
-
-    .card-img {
-      width: 100%;
-      aspect-ratio: 16/11;
-      object-fit: cover;
-      background: var(--color-surface-card);
+    .card:hover { background: var(--color-surface-hover); }
+    .card-head { display: flex; align-items: flex-start; gap: 16px; }
+    .card-head-text { flex: 1; min-width: 0; }
+    .card-title {
+      font-size: var(--fs-17);
+      font-weight: 700;
+      line-height: 1.375;
+      color: var(--color-on-surface);
+      transition: color var(--motion);
     }
-    .card-img.is-default { object-fit: contain; padding: 16px; }
-    .card-img-placeholder {
+    .card:hover .card-title { color: var(--color-primary); }
+    /* כל הכרטיס לחיץ: כפתור השם (נגיש במקלדת) נמתח על הכרטיס כולו ב-::after,
+       וטבעת הפוקוס שלו מצוירת סביב הכרטיס. הכפתורים שבתחתית יושבים מעליו. */
+    .card-link {
+      display: block;
       width: 100%;
-      aspect-ratio: 16/11;
-      background: linear-gradient(135deg, var(--color-placeholder), var(--color-outline));
+      padding: 0;
+      border: 0;
+      background: none;
+      color: inherit;
+      font: inherit;
+      outline: none;
+    }
+    .card-link::after { content: ''; position: absolute; inset: 0; border-radius: var(--radius-8); }
+    .card-link:focus-visible::after { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+    .card-title-text {
+      display: -webkit-box;
+      -webkit-line-clamp: 2; line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      overflow-wrap: anywhere;
+    }
+    .card-desc {
+      font-size: var(--fs-13);
+      line-height: 1.625;
+      min-height: 3.25em;
+      color: var(--color-on-surface-variant);
+      overflow-wrap: anywhere;
+      display: -webkit-box;
+      -webkit-line-clamp: 2; line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .card-actions {
+      position: relative;
+      z-index: 1;
       display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: auto;
+      padding-top: 4px;
+    }
+    .card-actions .btn { flex: 1 1 auto; }
+    /* "התקנה" טונלית — ברשת של כרטיסים אין "פעולה ראשית אחת", ושורה של כפתורים מלאים
+       מכבידה; "עדכון" מלא, כדי שתוסף שממתין לעדכון יבלוט */
+    .card-actions .btn[data-update="1"] { background: var(--color-primary); color: var(--color-on-primary); }
+    .card-actions .btn[data-update="1"]:hover:not(:disabled) { background: var(--color-primary-hover); }
+    @media (min-width: 640px) {
+      .card { padding: 20px; }
+      .card .plugin-icon { width: 72px; height: 72px; }
+    }
+
+    /* אייקון התוסף — אריח ריבועי (התמונה היא אייקון, לא באנר), object-fit contain.
+       בלי תמונה — הלוגו של אוצריא בחצי הגודל, על המשטח הטונלי. */
+    .plugin-icon {
+      position: relative;
+      display: inline-flex;
       align-items: center;
       justify-content: center;
-      font-size: var(--fs-32);
-      color: var(--color-icon-faint);
-    }
-
-    .card-body { padding: 14px; flex: 1; display: flex; flex-direction: column; gap: 10px; }
-
-    .card-badges { display: flex; gap: 6px; flex-wrap: wrap; }
-    .badge {
-      padding: 2px 10px;
+      flex-shrink: 0;
+      width: 64px; height: 64px;
+      overflow: hidden;
       border-radius: var(--radius-8);
-      font-size: var(--fs-11);
-      font-weight: 700;
+      background: var(--color-surface-container);
+      box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-outline-variant) 70%, transparent);
     }
-    .badge-stable   { background: var(--color-badge-stable-bg); color: var(--color-badge-stable-fg); }
-    .badge-beta     { background: var(--color-badge-beta-bg); color: var(--color-badge-beta-fg); }
-    .badge-experimental { background: var(--color-badge-exp-bg); color: var(--color-error); }
-    .badge-version  { background: var(--color-surface-muted); color: var(--color-text); }
-    .badge-downloads {
-      background: var(--color-surface-muted);
-      color: var(--color-text-muted);
+    .plugin-icon img { width: 100%; height: 100%; object-fit: contain; }
+    .plugin-icon.is-fallback img { width: 50%; height: 50%; opacity: .8; }
+    .plugin-icon-sm { width: 40px; height: 40px; }
+    .plugin-icon-hero { width: 96px; height: 96px; }
+    /* האייקונים מגיעים עם שוליים לבנים מובנים — באריח הגדול חותכים מהם מעט */
+    .plugin-icon-hero:not(.is-fallback) img { transform: scale(1.1); }
+    @media (min-width: 640px) {
+      .plugin-icon-hero { width: 120px; height: 120px; }
+    }
+
+    /* שורת המטא (כמו PluginMeta באתר): בלי מפרידים "·" — לכל פריט סימן משלו */
+    /* מעל ה-::after של כפתור השם — כדי שה-title של הדירוג וההורדות יוצג בריחוף
+       (לחיצה כאן עדיין פותחת את הפרטים: המאזין על הכרטיס כולו) */
+    .plugin-meta {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 4px 12px;
+      margin-top: 6px;
+      font-size: var(--fs-13);
+      color: var(--color-on-surface-variant);
+    }
+    .meta-item {
       display: inline-flex;
       align-items: center;
       gap: 4px;
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
     }
-    .badge-downloads svg { width: 12px; height: 12px; }
-    .badge-rating {
-      background: var(--color-surface-muted);
-      color: var(--color-text-muted);
+    .meta-item svg { width: 1.1em; height: 1.1em; }
+    .meta-rating svg { color: var(--color-rating-star); }
+    .meta-strong { color: var(--color-on-surface); }
+    .meta-version { gap: 6px; }
+
+    /* ── תגים (כמו ui/Badge באתר): ניטרלי כברירת מחדל ── */
+    .badge {
       display: inline-flex;
       align-items: center;
-      gap: 5px;
+      gap: 4px;
+      min-height: 22px;
+      padding: 0 10px;
+      border-radius: var(--radius-8);
+      background: var(--color-surface-container-highest);
+      color: var(--color-on-surface-variant);
+      font-size: var(--fs-11);
+      font-weight: 600;
+      line-height: 1.2;
+      white-space: nowrap;
     }
-    .badge-rating-count { color: var(--color-text-faint); }
+    .badge svg { width: 1.15em; height: 1.15em; }
+    .badge-md { min-height: 26px; padding: 0 12px; font-size: var(--fs-13); }
+    /* יציב — המשטח הטונלי; בטא — ניטרלי (ברירת המחדל); ניסיוני — אזהרה רכה */
+    .badge-stable { background: var(--color-secondary-container); color: var(--color-on-secondary-container); }
+    .badge-experimental { background: var(--color-warning-container); color: var(--color-on-warning-container); }
+    .badge-success { background: var(--color-success-container); color: var(--color-on-success-container); }
 
     /* חמישה כוכבים בשתי שכבות: מסילה ריקה ומעליה שכבה צבועה שנחתכת ברוחב
        באחוזים. כך גם דירוג של 4.6 מוצג נכון בלי אייקון חצי-כוכב. */
     .stars { position: relative; display: inline-flex; line-height: 0; flex: none; }
-    .stars-base { display: inline-flex; color: var(--color-rating-track); }
+    .stars-base { display: inline-flex; color: var(--color-outline-variant); }
     .stars-fill {
       position: absolute;
       inset-inline-start: 0;
@@ -321,375 +560,396 @@
       overflow: hidden;
       color: var(--color-rating-star);
     }
-    .stars svg { width: 12px; height: 12px; flex: none; }
-    .stars-lg svg { width: 17px; height: 17px; }
+    .stars svg { width: 14px; height: 14px; flex: none; }
+    .stars-lg svg { width: 26px; height: 26px; }
 
-    /* לוח הדירוגים בדף הפרטים */
-    .rating-summary { display: flex; align-items: center; gap: 16px; }
-    .rating-score { text-align: center; flex: none; }
-    .rating-score-num { font-size: var(--fs-32); font-weight: 700; color: var(--color-on-surface); }
-    .rating-score-meta { font-size: var(--fs-11); color: var(--color-text-faint); margin-top: 3px; }
-    .rating-rows { flex: 1; display: flex; flex-direction: column; gap: 5px; min-width: 0; }
-    .rating-row {
+    /* ── מצבים: טעינה (שלד), ריק, שגיאה ── */
+    /* שלד טעינה — משטחים במקום הכרטיסים שעוד לא הגיעו, באותן מידות (כמו ui/Skeleton) */
+    #loading { padding: 16px 20px 24px; }
+    .skeleton-card {
       display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 16px;
+      background: var(--color-surface);
+      border-radius: var(--radius-8);
+    }
+    .skeleton {
+      display: block;
+      background: var(--color-surface-container-high);
+      border-radius: var(--radius-8);
+      animation: pulse 2s cubic-bezier(.4, 0, .6, 1) infinite;
+    }
+    .sk-icon { width: 64px; height: 64px; flex-shrink: 0; }
+    .sk-lines { flex: 1; display: flex; flex-direction: column; gap: 10px; padding-top: 4px; }
+    .sk-title, .sk-meta, .sk-line { border-radius: var(--radius-3); }
+    .sk-title { width: 75%; height: 18px; }
+    .sk-meta { width: 66%; height: 13px; }
+    .sk-line { height: 13px; }
+    .sk-short { width: 83%; }
+    .sk-btn { height: 36px; margin-top: 4px; }
+    @media (min-width: 640px) {
+      .skeleton-card { padding: 20px; }
+      .sk-icon { width: 72px; height: 72px; }
+    }
+    @keyframes pulse { 50% { opacity: .5; } }
+
+    /* כרטיס מצב (כמו ui/EmptyState באתר): אריח אייקון, כותרת, הסבר ופעולות */
+    .state-card {
+      margin: 20px;
+      padding: 44px 24px;
+      display: flex;
+      flex-direction: column;
       align-items: center;
-      gap: 8px;
-      font-size: var(--fs-11);
-      color: var(--color-text-muted);
-    }
-    .rating-row-star { display: inline-flex; align-items: center; gap: 2px; flex: none; }
-    .rating-row-star svg { width: 10px; height: 10px; color: var(--color-rating-star); }
-    .rating-bar {
-      flex: 1;
-      height: 6px;
-      border-radius: var(--radius-3);
-      background: var(--color-surface-muted);
-      overflow: hidden;
-      min-width: 0;
-    }
-    .rating-bar-fill { display: block; height: 100%; background: var(--color-rating-star); border-radius: var(--radius-3); }
-    .rating-row-count { flex: none; min-width: 22px; text-align: start; }
-    .rating-note { font-size: var(--fs-11); color: var(--color-text-faint); margin-top: 12px; }
-    .rating-verified { color: var(--color-badge-stable-fg); font-weight: 700; }
-    .rating-empty { font-size: var(--fs-13); color: var(--color-text-muted); }
-
-    .card-title { font-size: var(--fs-16); font-weight: 700; color: var(--color-on-surface); }
-    .card-desc  { font-size: var(--fs-13); color: var(--color-text); line-height: 1.5; flex: 1;
-      display: -webkit-box; -webkit-line-clamp: 3; line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-
-    .card-tags { display: flex; flex-wrap: wrap; gap: 4px; }
-    .card-tag {
-      padding: 2px 8px;
-      border-radius: var(--radius-8);
-      font-size: var(--fs-11);
-      background: var(--color-surface-muted);
-      color: var(--color-text-muted);
-    }
-
-    .card-actions { display: flex; gap: 8px; }
-    .btn {
-      flex: 1;
-      padding: 8px 12px;
-      border-radius: var(--radius-8);
-      font-size: var(--fs-13);
-      font-weight: 700;
-      cursor: pointer;
       text-align: center;
-      text-decoration: none;
-      border: none;
-      transition: all .15s;
+      background: var(--color-surface);
+      border-radius: var(--radius-8);
     }
-    .btn:disabled { opacity: .6; cursor: default; }
-    .btn-primary { background: var(--color-accent); color: var(--color-on-accent); }
-    .btn-primary:hover:not(:disabled) { background: var(--color-primary-hover); }
-    .btn-secondary { background: var(--color-surface-card); color: var(--color-on-surface); border: 1.5px solid var(--color-outline-strong); }
-    .btn-secondary:hover { background: var(--color-surface); border-color: var(--color-on-surface); }
+    .state-icon {
+      width: 52px; height: 52px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--radius-8);
+      background: var(--color-secondary-container);
+      color: var(--color-on-secondary-container);
+    }
+    .state-icon svg { width: 30px; height: 30px; }
+    .state-title { margin-top: 18px; font-size: var(--fs-18); font-weight: 700; color: var(--color-on-surface); }
+    .state-desc {
+      margin-top: 8px;
+      max-width: 460px;
+      font-size: var(--fs-14);
+      line-height: 1.6;
+      color: var(--color-on-surface-variant);
+    }
+    #error-body { display: flex; flex-direction: column; align-items: center; }
+    /* שגיאה אמיתית — אריח בגוון השגיאה; אין חיבור לאינטרנט — הודעה רגועה (לא אדומה)
+       שגם משתמש לא-טכני יבין */
+    #error:not(.offline) .state-icon { background: var(--color-error-container); color: var(--color-on-error-container); }
+    #error .error-retry { margin-top: 22px; }
 
-    /* ספינר קטן בתוך כפתור התקנה בזמן המתנה לתוצאה */
-    .btn-spinner {
-      display: inline-block;
-      width: 11px; height: 11px;
-      border: 2px solid currentColor;
-      border-top-color: transparent;
+    /* ── קישוט כותרת (כמו TitleOrnament באתר): קו דק שדוהה בקצוות ונקודת זהב במרכזו.
+       הרוחב יחסי לעטיפה שמעליו (heading-wrap — ברוחב הכותרת). ── */
+    .heading-wrap { display: flex; flex-direction: column; width: fit-content; max-width: 100%; }
+    .title-ornament {
+      position: relative;
+      display: block;
+      width: max(120px, 70%);
+      max-width: 100%;
+      height: 7px;
+      margin-top: 12px;
+      margin-inline: auto;
+    }
+    .title-ornament.is-start { margin-inline-start: 0; }
+    .title-ornament::before {
+      content: '';
+      position: absolute;
+      inset-inline: 0;
+      top: 3px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--color-outline-variant) 12%, var(--color-outline-variant) 88%, transparent);
+    }
+    .title-ornament::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: calc(50% - 3.5px);
+      width: 7px; height: 7px;
       border-radius: 50%;
-      animation: spin .7s linear infinite;
-      vertical-align: -1px;
-      margin-inline-end: 6px;
+      background: var(--color-ornament);
+      /* טבעת בצבע המשטח שמתחת — הנקודה "חותכת" את הקו */
+      box-shadow: 0 0 0 3px var(--ornament-bg, var(--color-background));
     }
+    .section-title { font-size: var(--fs-20); font-weight: 700; line-height: 1.3; color: var(--color-on-surface); }
+    .section-head { margin-bottom: 16px; }
 
-    /* ── מצבים ── */
-    #loading, #error, #empty {
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      padding: 60px 20px; gap: 12px; text-align: center;
-    }
-    .spinner {
-      width: 36px; height: 36px;
-      border: 3px solid var(--color-outline);
-      border-top-color: var(--color-on-surface);
-      border-radius: 50%;
-      animation: spin .8s linear infinite;
-    }
-    #error .icon { font-size: var(--fs-40); }
-    #error p { color: var(--color-error); font-size: var(--fs-14); }
-    /* אין חיבור לאינטרנט — הודעה רגועה (לא אדומה) שגם משתמש לא-טכני יבין */
-    #error.offline .icon svg { stroke: var(--color-text-muted); }
-    #error.offline p { color: var(--color-on-surface); font-size: var(--fs-14); max-width: 440px; line-height: 1.7; }
-    #error.offline p.offline-title { font-size: var(--fs-16, 16px); font-weight: 700; }
-    #error .error-retry { margin-top: 4px; }
-    .hidden { display: none !important; }
-
-    /* ── מודל עדכונים ── */
+    /* ── חלונית עדכונים (כמו ui/Dialog באתר) ── */
     #updates-backdrop {
       position: fixed;
       inset: 0;
-      background: var(--color-scrim);
+      background: var(--color-scrim-dialog);
       z-index: 50;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 20px;
+      padding: 24px;
+      animation: fade-in 180ms ease-out;
     }
     #updates-modal {
-      background: var(--color-surface-card);
-      border-radius: var(--radius-8);
-      border: 1px solid var(--color-outline);
+      position: relative;
       width: 100%;
-      max-width: 480px;
-      max-height: 80vh;
+      max-width: 512px;
+      max-height: min(85vh, 736px);
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      box-shadow: 0 16px 48px var(--color-shadow-modal);
+      background: var(--color-surface-container-high);
+      border-radius: var(--radius-8);
+      box-shadow: var(--shadow-dialog);
+      animation: dialog-in 180ms ease-out;
     }
-    .modal-header {
-      padding: 18px 20px 14px;
-      border-bottom: 1px solid var(--color-divider);
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .modal-header-icon { font-size: var(--fs-22); }
-    .modal-header h2 { font-size: var(--fs-16); font-weight: 700; flex: 1; }
-    .modal-close {
-      background: none; border: none; cursor: pointer;
-      font-size: var(--fs-18); color: var(--color-text-faint); line-height: 1;
-      padding: 4px; border-radius: var(--radius-6); transition: color .15s;
-    }
-    .modal-close:hover { color: var(--color-on-surface); }
-    .modal-body { flex: 1; min-height: 0; overflow-y: auto; padding: 12px 0; }
+    @keyframes fade-in { from { opacity: 0; } }
+    @keyframes dialog-in { from { opacity: 0; transform: translateY(20px); } }
     .modal-header, .modal-footer { flex-shrink: 0; }
+    /* כותרת ממורכזת עם קישוט; כפתור הסגירה בפינת הסוף */
+    .modal-header { position: relative; padding: 24px 56px 16px; text-align: center; }
+    .modal-header h2 { font-size: var(--fs-20); font-weight: 700; color: var(--color-on-surface); }
+    .modal-header .title-ornament { --ornament-bg: var(--color-surface-container-high); width: max(96px, 45%); }
+    .modal-close { position: absolute; top: 12px; inset-inline-end: 12px; }
+    .modal-body { flex: 1; min-height: 0; overflow-y: auto; padding: 0 12px 8px; }
     .update-row {
       display: flex;
       align-items: center;
       gap: 12px;
-      padding: 10px 20px;
-      border-bottom: 1px solid var(--color-surface-muted);
+      padding: 12px;
+      border-bottom: 1px solid var(--color-outline-variant);
     }
     .update-row:last-child { border-bottom: none; }
     .update-info { flex: 1; min-width: 0; }
-    .update-name { font-size: var(--fs-14); font-weight: 700; color: var(--color-on-surface); }
-    .update-versions { font-size: var(--fs-12); color: var(--color-text-faint); margin-top: 2px; }
-    .update-btn {
-      flex-shrink: 0;
-      padding: 6px 16px;
-      border-radius: var(--radius-8);
-      font-size: var(--fs-12);
-      font-weight: 700;
-      cursor: pointer;
-      border: none;
-      background: var(--color-accent);
-      color: var(--color-on-accent);
-      transition: background .15s;
+    .update-name {
+      font-size: var(--fs-15);
+      font-weight: 600;
+      color: var(--color-on-surface);
+      overflow: hidden;
+      text-overflow: ellipsis;
       white-space: nowrap;
     }
-    .update-btn:hover { background: var(--color-primary-hover); }
-    .update-btn:disabled { opacity: .6; cursor: default; }
-    .modal-footer {
-      padding: 14px 20px;
-      border-top: 1px solid var(--color-divider);
-      display: flex;
-      justify-content: flex-end;
-    }
-    .update-all-btn {
-      padding: 8px 20px;
-      border-radius: var(--radius-8);
+    .update-versions {
+      margin-top: 2px;
       font-size: var(--fs-13);
-      font-weight: 700;
-      cursor: pointer;
-      border: none;
-      background: var(--color-accent);
-      color: var(--color-on-accent);
-      transition: background .15s;
+      color: var(--color-on-surface-variant);
+      font-variant-numeric: tabular-nums;
     }
-    .update-all-btn:hover { background: var(--color-primary-hover); }
-    .update-all-btn:disabled { opacity: .6; cursor: default; }
+    .update-row .btn { flex-shrink: 0; white-space: nowrap; }
+    .modal-footer {
+      padding: 12px 24px;
+      border-top: 1px solid var(--color-outline-variant);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 12px;
+    }
 
-    /* ── דף פרטי תוסף ── */
+    /* ── דף פרטי תוסף (כמו עמוד התוסף באתר) ── */
     #detail-page {
-      padding: 20px;
-      max-width: 900px;
+      padding: 12px 20px 40px;
+      max-width: 1000px;
       margin: 0 auto;
     }
+    .back-btn { margin-inline-start: -12px; margin-bottom: 12px; }
+    /* החץ מצביע "אחורה" — ימינה ב-rtl, שמאלה ב-ltr */
+    html[dir="ltr"] .back-btn svg { transform: scaleX(-1); }
 
-    .back-btn {
+    /* ראש העמוד: אייקון + שם (עם קישוט) + תג סטטוס, תיאור קצר ופעולות */
+    .detail-hero-head { display: flex; align-items: center; gap: 16px; }
+    .detail-hero-text { flex: 1; min-width: 0; }
+    .detail-name {
+      font-size: var(--fs-26);
+      font-weight: 700;
+      line-height: 1.25;
+      color: var(--color-on-surface);
+      overflow-wrap: anywhere;
+    }
+    .detail-badges { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .detail-desc {
+      margin-top: 16px;
+      max-width: 72ch;
+      font-size: var(--fs-15);
+      line-height: 1.625;
+      color: var(--color-on-surface-variant);
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+    .detail-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+    @media (min-width: 640px) {
+      .detail-hero-head { gap: 24px; }
+    }
+
+    /* נתוני המפתח — רצועה אחת: דירוג · הורדות · גרסה · תאימות · מפתח. קו הפרדה בין
+       התאים; בתא הראשון של כל שורה הקו נדחף אל מחוץ לרצועה ונחתך (overflow) */
+    .key-facts {
+      display: flex;
+      flex-wrap: wrap;
+      row-gap: 12px;
+      margin-top: 24px;
+      padding: 14px 0;
+      background: var(--color-surface);
+      border-radius: var(--radius-8);
+      overflow: hidden;
+    }
+    .key-fact {
+      flex: 1 1 120px;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      padding: 0 12px;
+      margin-inline-start: -1px;
+      border-inline-start: 1px solid var(--color-outline-variant);
+      text-align: center;
+    }
+    .key-fact dt { font-size: var(--fs-11); color: var(--color-on-surface-variant); }
+    .key-fact dd { display: flex; flex-direction: column; align-items: center; gap: 2px; max-width: 100%; }
+    .key-fact-value {
+      max-width: 100%;
+      font-size: var(--fs-17);
+      font-weight: 700;
+      color: var(--color-on-surface);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-variant-numeric: tabular-nums;
+    }
+    .key-fact-sub {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      background: none;
-      border: none;
-      cursor: pointer;
-      color: var(--color-text);
-      font-size: var(--fs-14);
-      font-weight: 600;
-      padding: 6px 0;
-      margin-bottom: 16px;
-      transition: color .15s;
+      gap: 4px;
+      font-size: var(--fs-11);
+      color: var(--color-on-surface-variant);
+      font-variant-numeric: tabular-nums;
     }
-    .back-btn:hover { color: var(--color-on-surface); }
-    .back-arrow { font-size: var(--fs-18); line-height: 1; }
+    .key-fact-sub .stars svg { width: 12px; height: 12px; }
 
-    .detail-header {
-      background: var(--color-surface-card);
-      border-radius: var(--radius-8);
-      border: 1px solid var(--color-outline);
-      padding: 24px;
-      margin-bottom: 16px;
-      display: grid;
-      grid-template-columns: 260px 1fr;
-      gap: 24px;
-      align-items: start;
-    }
-    @media (max-width: 600px) {
-      .detail-header { grid-template-columns: 1fr; }
-    }
-
-    .detail-main-img {
-      width: 100%;
-      aspect-ratio: 4/3;
-      object-fit: cover;
-      border-radius: var(--radius-8);
-      background: var(--color-surface-card);
-    }
-    .detail-main-img.is-default { object-fit: contain; padding: 24px; }
-    .detail-main-img-placeholder {
-      width: 100%;
-      aspect-ratio: 4/3;
-      background: linear-gradient(135deg, var(--color-placeholder), var(--color-outline));
-      border-radius: var(--radius-8);
+    /* הודעה: מוצגת גרסה ישנה יותר שתואמת לאוצריא של המשתמש */
+    .detail-notice {
       display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-top: 16px;
+      padding: 12px 16px;
+      border-radius: var(--radius-8);
+      background: var(--color-warning-container);
+      color: var(--color-on-warning-container);
+      font-size: var(--fs-13);
+      line-height: 1.6;
+    }
+    .detail-notice svg { width: 20px; height: 20px; margin-top: 1px; }
+
+    /* גוף העמוד — אזורים עם כותרת וקישוט, ברווח אחד קבוע ביניהם */
+    .detail-sections { display: flex; flex-direction: column; gap: 40px; margin-top: 40px; }
+    .detail-section { min-width: 0; }
+    .detail-columns { display: grid; gap: 40px; }
+    @media (min-width: 820px) {
+      .detail-columns { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+      .detail-columns.has-desc { grid-template-columns: minmax(0, 1fr) 340px; }
+    }
+    .detail-about {
+      max-width: 72ch;
+      font-size: var(--fs-15);
+      line-height: 1.7;
+      color: var(--color-on-surface);
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    /* "מידע כללי" — רשימת הגדרות בשורות: תווית בצד ההתחלה, ערך בצד הסוף */
+    .info-list { padding: 0 16px; background: var(--color-surface); border-radius: var(--radius-8); }
+    .info-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      min-height: 46px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--color-outline-variant);
+    }
+    .info-row:last-child { border-bottom: none; }
+    .info-row dt { flex-shrink: 0; font-size: var(--fs-13); color: var(--color-on-surface-variant); }
+    .info-row dd {
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 6px;
+      text-align: end;
+      font-size: var(--fs-15);
+      font-weight: 600;
+      color: var(--color-on-surface);
+      overflow-wrap: anywhere;
+      font-variant-numeric: tabular-nums;
+    }
+    .info-row dd svg { width: 18px; height: 18px; color: var(--color-on-surface-variant); }
+    .detail-sub { margin: 20px 0 8px; font-size: var(--fs-13); color: var(--color-on-surface-variant); }
+    .detail-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+
+    /* לוח הדירוגים: הממוצע באריח, התפלגות 5★→1★ והערה שהדירוג נעשה באתר.
+       הממוצע וההתפלגות זה לצד זה רק כשהלוח רחב מספיק (container query). */
+    .rating-panel { padding: 16px; background: var(--color-surface); border-radius: var(--radius-8); container-type: inline-size; }
+    .rating-summary { display: grid; gap: 20px; }
+    @container (min-width: 440px) {
+      .rating-summary:not(.is-empty) { grid-template-columns: 180px minmax(0, 1fr); gap: 28px; }
+    }
+    .rating-score {
+      display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      font-size: var(--fs-48);
-      color: var(--color-icon-faint);
-    }
-
-    .detail-info { display: flex; flex-direction: column; gap: 12px; }
-    .detail-name { font-size: var(--fs-24); font-weight: 800; color: var(--color-on-surface); line-height: 1.3; }
-    .detail-desc { font-size: var(--fs-14); color: var(--color-text); line-height: 1.7; white-space: pre-wrap; }
-    .detail-badges { display: flex; gap: 8px; flex-wrap: wrap; }
-    .detail-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
-    .detail-install-btn {
-      padding: 10px 24px;
+      gap: 8px;
+      padding: 20px;
+      text-align: center;
+      background: var(--color-surface-container-low);
       border-radius: var(--radius-8);
-      font-size: var(--fs-14);
-      font-weight: 700;
-      cursor: pointer;
-      border: none;
-      background: var(--color-accent);
-      color: var(--color-on-accent);
-      transition: background .15s;
     }
-    .detail-install-btn:hover { background: var(--color-primary-hover); }
-    .detail-install-btn:disabled { opacity: .6; cursor: default; }
-    /* תוסף שכבר מותקן — אותו מקום, אבל הכפתור פותח אותו במקום להיות מנוטרל */
-    .detail-install-btn.is-open {
-      background: var(--color-surface-card);
-      color: var(--color-on-surface);
-      border: 1.5px solid var(--color-outline-strong);
-    }
-    .detail-install-btn.is-open:hover {
-      background: var(--color-surface);
-      border-color: var(--color-on-surface);
-    }
-
-    .detail-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-      margin-bottom: 16px;
-    }
-    @media (max-width: 500px) { .detail-grid { grid-template-columns: 1fr; } }
-
-    .detail-card {
-      background: var(--color-surface-card);
-      border-radius: var(--radius-8);
-      border: 1px solid var(--color-outline);
-      padding: 18px;
-    }
-    .detail-card h2 {
-      font-size: var(--fs-15);
-      font-weight: 700;
-      color: var(--color-on-surface);
-      margin-bottom: 14px;
+    .rating-score-num { font-size: var(--fs-40); font-weight: 700; line-height: 1; color: var(--color-on-surface); font-variant-numeric: tabular-nums; }
+    .rating-score-meta { font-size: var(--fs-13); color: var(--color-on-surface-variant); }
+    .rating-rows { display: flex; flex-direction: column; justify-content: center; gap: 10px; min-width: 0; }
+    .rating-row {
       display: flex;
       align-items: center;
-      gap: 6px;
-    }
-    .detail-card h2 .icon { font-size: var(--fs-18); }
-
-    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .info-cell {
-      background: var(--color-surface-soft);
-      border-radius: var(--radius-8);
-      padding: 10px 12px;
-    }
-    .info-cell.full { grid-column: 1 / -1; }
-    .info-label { font-size: var(--fs-11); color: var(--color-text-faint); margin-bottom: 3px; }
-    .info-value { font-size: var(--fs-13); font-weight: 700; color: var(--color-on-surface); }
-
-    .detail-tags { display: flex; flex-wrap: wrap; gap: 8px; }
-    .detail-tag {
-      padding: 4px 14px;
-      border-radius: var(--radius-8);
-      font-size: var(--fs-12);
-      font-weight: 500;
-      background: var(--color-surface-muted);
-      color: var(--color-text-muted);
-      cursor: pointer;
-      border: 1px solid transparent;
-      transition: all .15s;
-    }
-    .detail-tag:hover { border-color: var(--color-on-surface); color: var(--color-on-surface); }
-
-    .screenshots-section {
-      background: var(--color-surface-card);
-      border-radius: var(--radius-8);
-      border: 1px solid var(--color-outline);
-      padding: 18px;
-      margin-bottom: 16px;
-    }
-    .screenshots-section h2 {
-      font-size: var(--fs-15);
-      font-weight: 700;
-      color: var(--color-on-surface);
-      margin-bottom: 14px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .screenshots-row {
-      display: flex;
       gap: 12px;
-      overflow-x: auto;
-      padding-bottom: 6px;
-      scroll-snap-type: x mandatory;
+      font-size: var(--fs-13);
+      color: var(--color-on-surface-variant);
+      font-variant-numeric: tabular-nums;
     }
-    .screenshots-row::-webkit-scrollbar { height: 6px; }
-    .screenshots-row::-webkit-scrollbar-thumb { background: var(--color-outline-strong); border-radius: var(--radius-3); }
+    .rating-row-star { display: inline-flex; align-items: center; justify-content: flex-end; gap: 4px; flex: none; width: 30px; }
+    .rating-row-star svg { width: 13px; height: 13px; color: var(--color-rating-star); }
+    .rating-bar {
+      flex: 1;
+      height: 8px;
+      border-radius: var(--radius-3);
+      background: var(--color-surface-container-high);
+      overflow: hidden;
+      min-width: 0;
+    }
+    .rating-bar-fill { display: block; height: 100%; background: var(--color-rating-star); border-radius: var(--radius-3); }
+    .rating-row-count { flex: none; min-width: 36px; text-align: start; }
+    .rating-note {
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid var(--color-outline-variant);
+      font-size: var(--fs-13);
+      color: var(--color-on-surface-variant);
+    }
+
+    /* צילומי מסך — מסגרת 16/10 על משטח טונלי; לחיצה פותחת תצוגה מוגדלת */
+    .screenshots-row { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; scroll-snap-type: x mandatory; }
     .screenshot-thumb {
       flex-shrink: 0;
-      width: 220px;
-      aspect-ratio: 16/11;
-      object-fit: cover;
+      width: 280px;
+      aspect-ratio: 16/10;
+      object-fit: contain;
+      border: 1px solid var(--color-outline-variant);
       border-radius: var(--radius-8);
-      border: 1px solid var(--color-outline);
-      cursor: pointer;
+      background: var(--color-surface-container);
+      cursor: zoom-in;
       scroll-snap-align: start;
-      transition: transform .15s;
+      transition: border-color var(--motion);
     }
-    .screenshot-thumb:hover { transform: scale(1.02); }
+    .screenshot-thumb:hover { border-color: var(--color-outline); }
 
     /* ── lightbox ── */
     #lightbox {
       position: fixed;
       inset: 0;
-      background: var(--color-scrim-dark);
+      background: var(--color-scrim-lightbox);
       z-index: 100;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 20px;
+      padding: 24px;
+      animation: fade-in 180ms ease-out;
     }
     #lightbox img {
       max-width: 100%;
@@ -701,133 +961,102 @@
       position: absolute;
       top: 16px;
       inset-inline-end: 16px;
-      background: var(--color-overlay-light);
-      border: none;
+      background: color-mix(in srgb, var(--color-on-scrim) 15%, transparent);
       color: var(--color-on-scrim);
-      font-size: var(--fs-24);
-      width: 40px; height: 40px;
-      border-radius: 50%;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: background .15s;
     }
-    #lightbox-close:hover { background: var(--color-overlay-light-hover); }
+    #lightbox-close:hover { background: color-mix(in srgb, var(--color-on-scrim) 28%, transparent); color: var(--color-on-scrim); }
 
-    /* ── הודעת תוסף חדש ── */
+    /* ── הודעת תוסף חדש — snackbar של M3 (inverseSurface) ── */
     #new-toast {
       position: fixed;
       bottom: 20px;
       left: 50%;
       transform: translateX(-50%);
-      background: var(--color-accent);
-      color: var(--color-on-accent);
-      border-radius: var(--radius-8);
-      padding: 12px;
-      padding-inline: 14px 18px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      box-shadow: 0 8px 32px var(--color-shadow-toast);
       z-index: 80;
       max-width: calc(100% - 40px);
+      min-height: 48px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px;
+      padding-inline-start: 16px;
+      background: var(--color-inverse-surface);
+      color: var(--color-on-inverse-surface);
+      border-radius: var(--radius-8);
+      box-shadow: var(--shadow-toast);
       animation: toast-in .3s ease;
     }
     @keyframes toast-in {
       from { opacity: 0; transform: translate(-50%, 24px); }
       to   { opacity: 1; transform: translate(-50%, 0); }
     }
-    #new-toast .toast-icon { display: flex; flex-shrink: 0; }
-    #new-toast .toast-text { font-size: var(--fs-14); font-weight: 700; flex: 1; white-space: nowrap; }
-    #new-toast .toast-view {
-      flex-shrink: 0;
-      padding: 6px 18px;
-      border-radius: var(--radius-8);
-      font-size: var(--fs-13);
-      font-weight: 700;
-      cursor: pointer;
-      border: none;
-      background: var(--color-surface-card);
-      color: var(--color-on-surface);
-      transition: background .15s;
-    }
-    #new-toast .toast-view:hover { background: var(--color-surface-muted); }
-    #new-toast .toast-close {
-      background: none; border: none; cursor: pointer;
-      font-size: var(--fs-16); color: var(--color-icon-faint); line-height: 1;
-      padding: 4px; transition: color .15s;
-    }
-    #new-toast .toast-close:hover { color: var(--color-on-accent); }
-
-    /* ── סרגל קטגוריות ── */
-    #cats-bar {
-      background: var(--color-surface-card);
-      border-bottom: 1px solid var(--color-outline);
-      padding: 10px 20px;
-      display: flex;
-      gap: 8px;
-      overflow-x: auto;
-    }
-    #cats-bar::-webkit-scrollbar { height: 6px; }
-    #cats-bar::-webkit-scrollbar-thumb { background: var(--color-outline-strong); border-radius: var(--radius-3); }
-    .cat-chip {
-      flex-shrink: 0;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 14px;
-      border-radius: var(--radius-8);
-      font-size: var(--fs-13);
+    #new-toast .toast-icon { display: flex; flex-shrink: 0; margin-inline-end: 4px; color: var(--color-inverse-primary); }
+    #new-toast .toast-icon svg { width: 22px; height: 22px; }
+    /* במסך צר הטקסט נחתך ב-"…" — הכפתורים נשארים תמיד בתוך ההודעה */
+    #new-toast .toast-text {
+      flex: 1;
+      min-width: 0;
+      margin-inline-end: 6px;
+      font-size: var(--fs-14);
       font-weight: 600;
-      cursor: pointer;
-      border: 1px solid var(--color-outline-strong);
-      background: var(--color-surface-soft);
-      color: var(--color-text);
-      transition: background-color .15s, color .15s, border-color .15s;
       white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
-    .cat-chip:hover { border-color: var(--color-on-surface); color: var(--color-on-surface); }
-    .cat-chip.active { background: var(--color-accent); color: var(--color-on-accent); border-color: var(--color-accent); }
-    .cat-chip .chip-count { font-size: var(--fs-11); opacity: .75; }
-    /* "כל התוספים" — מוצא אחרון מוצנע בסוף השורה */
-    .cat-chip.all-chip { border-style: dashed; background: none; color: var(--color-text-faint); }
-    .cat-chip.all-chip:hover { color: var(--color-on-surface); }
+    #new-toast .toast-view, #new-toast .toast-close { flex-shrink: 0; }
+    #new-toast .toast-view { color: var(--color-inverse-primary); font-size: var(--fs-14); }
+    #new-toast .toast-view:hover { background: color-mix(in srgb, var(--color-inverse-primary) 12%, transparent); }
+    #new-toast .toast-close { width: 36px; height: 36px; color: var(--color-on-inverse-surface); }
+    #new-toast .toast-close svg { width: 20px; height: 20px; }
+    #new-toast .toast-close:hover { background: color-mix(in srgb, var(--color-on-inverse-surface) 12%, transparent); }
 
     /* ── דף הבית האצור ── */
-    #home { padding: 20px; display: flex; flex-direction: column; gap: 28px; }
-    .home-section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
-    .home-section-title { font-size: var(--fs-18); font-weight: 800; color: var(--color-on-surface); }
-    .home-section-desc { font-size: var(--fs-13); color: var(--color-text-muted); margin-top: 2px; }
-    .home-see-all {
-      background: none; border: none; cursor: pointer;
-      color: var(--color-text); font-size: var(--fs-13); font-weight: 700;
-      white-space: nowrap; padding: 4px 0; transition: color .15s;
+    #home { padding: 24px 20px; display: flex; flex-direction: column; gap: 40px; }
+    /* כותרת אזור (כמו StoreHomeSection באתר): כותרת + קישוט ותיאור; "לכל הקטגוריה" בקצה */
+    .home-section-head {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 20px;
     }
-    .home-see-all:hover { color: var(--color-on-surface); text-decoration: underline; }
-    .home-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
-    .home-row { display: flex; gap: 16px; overflow-x: auto; padding-bottom: 8px; scroll-snap-type: x proximity; }
-    .home-row::-webkit-scrollbar { height: 6px; }
-    .home-row::-webkit-scrollbar-thumb { background: var(--color-outline-strong); border-radius: var(--radius-3); }
+    .home-section-head-text { min-width: 0; }
+    .home-section-desc { margin-top: 10px; font-size: var(--fs-14); color: var(--color-on-surface-variant); }
+    .home-see-all { flex-shrink: 0; white-space: nowrap; }
+    /* overflow-x חותך גם אנכית — ריפוד של 4px (ומרווח שלילי שווה, בלי תזוזה) משאיר
+       מקום לטבעת הפוקוס של הכרטיס (2px + מרווח 2px) */
+    .home-row {
+      display: flex;
+      gap: 16px;
+      overflow-x: auto;
+      margin: -4px;
+      padding: 4px 4px 12px;
+      scroll-padding-inline: 4px;
+      scroll-snap-type: x proximity;
+    }
     .home-row .card { width: 280px; flex-shrink: 0; scroll-snap-align: start; }
     .home-footer-strip {
-      text-align: center;
-      padding: 12px 0 4px;
-      border-top: 1px dashed var(--color-outline-strong);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      padding-top: 16px;
+      border-top: 1px solid var(--color-outline-variant);
       font-size: var(--fs-13);
-      color: var(--color-text-muted);
+      color: var(--color-on-surface-variant);
     }
-    .home-footer-strip button {
-      background: none; border: none; cursor: pointer;
-      color: var(--color-text); font-weight: 700; font-size: var(--fs-13);
-      text-decoration: underline; transition: color .15s;
-    }
-    .home-footer-strip button:hover { color: var(--color-on-surface); }
 
     /* ── כותרת תצוגה (קטגוריה / תוצאות חיפוש) ── */
-    #view-title { padding: 16px 20px 0; }
-    #view-title h2 { font-size: var(--fs-18); font-weight: 800; color: var(--color-on-surface); }
-    #view-title p { font-size: var(--fs-13); color: var(--color-text-muted); margin-top: 4px; }
+    #view-title { padding: 24px 20px 4px; }
+    #view-title p { margin-top: 10px; font-size: var(--fs-14); color: var(--color-on-surface-variant); }
+
+    /* בלי תנועה למי שביקש זאת — השלד סטטי, החלונות נפתחים בלי אנימציה */
+    @media (prefers-reduced-motion: reduce) {
+      .skeleton, #updates-backdrop, #updates-modal, #lightbox, #new-toast { animation: none; }
+      .card, .chip, .btn, .icon-btn, .field, .card-title, #hide-installed-wrap .switch,
+      #hide-installed-wrap .switch::after { transition: none; }
+    }
   </style>
 </head>
 <body>
@@ -836,45 +1065,69 @@
 <header class="topbar">
   <h1 data-t="חנות תוספים">חנות תוספים</h1>
   <span id="plugin-count"></span>
-  <button id="refresh-btn" data-t-title="רענן רשימה" title="רענן רשימה"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></button>
+  <button id="refresh-btn" class="icon-btn" type="button" data-t-title="רענן רשימה" title="רענן רשימה" data-t-aria-label="רענן רשימה" aria-label="רענן רשימה"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg></button>
 </header>
 
 <main class="app-content" id="app-content">
 
 <div id="filters">
-  <input id="search" type="search" autofocus data-t-placeholder="חיפוש לפי שם, תיאור או תגית..." placeholder="חיפוש לפי שם, תיאור או תגית...">
-  <select id="status-filter">
-    <option value="all" data-t="כל הסטטוסים">כל הסטטוסים</option>
-    <option value="stable" data-t="יציב">יציב</option>
-    <option value="beta" data-t="בטא">בטא</option>
-    <option value="experimental" data-t="ניסיוני">ניסיוני</option>
-  </select>
-  <select id="sort-select" data-t-title="מיון" title="מיון">
-    <option value="recommended" data-t="מומלצים">מומלצים</option>
-    <option value="newest" data-t="החדשים ביותר">החדשים ביותר</option>
-    <option value="updated" data-t="עודכנו לאחרונה">עודכנו לאחרונה</option>
-  </select>
+  <div class="search-field">
+    <svg class="field-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+    <input id="search" class="field" type="search" autofocus data-t-placeholder="חיפוש לפי שם, תיאור או תגית..." placeholder="חיפוש לפי שם, תיאור או תגית..." data-t-aria-label="חיפוש תוספים" aria-label="חיפוש תוספים">
+  </div>
+  <span class="select-field">
+    <select id="status-filter" class="field" data-t-aria-label="סטטוס" aria-label="סטטוס">
+      <option value="all" data-t="כל הסטטוסים">כל הסטטוסים</option>
+      <option value="stable" data-t="יציב">יציב</option>
+      <option value="beta" data-t="בטא">בטא</option>
+      <option value="experimental" data-t="ניסיוני">ניסיוני</option>
+    </select>
+    <svg class="field-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.59 8.59 12 13.17 7.41 8.59 6 10l6 6 6-6z"/></svg>
+  </span>
+  <span class="select-field">
+    <select id="sort-select" class="field" data-t-title="מיון" title="מיון" data-t-aria-label="מיון" aria-label="מיון">
+      <option value="recommended" data-t="מומלצים">מומלצים</option>
+      <option value="newest" data-t="החדשים ביותר">החדשים ביותר</option>
+      <option value="updated" data-t="עודכנו לאחרונה">עודכנו לאחרונה</option>
+    </select>
+    <svg class="field-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.59 8.59 12 13.17 7.41 8.59 6 10l6 6 6-6z"/></svg>
+  </span>
   <label id="hide-installed-wrap" data-t-title="הסתרת תוספים שכבר מותקנים אצלך (למעט כאלה עם עדכון זמין)" title="הסתרת תוספים שכבר מותקנים אצלך (למעט כאלה עם עדכון זמין)">
     <input type="checkbox" id="hide-installed">
-    <span class="switch"></span>
+    <span class="switch" aria-hidden="true"></span>
     <span data-t="הסתר מותקנים">הסתר מותקנים</span>
   </label>
 </div>
 
-<div id="cats-bar" class="hidden"></div>
+<nav id="cats-bar" class="scroll-x hidden" data-t-aria-label="קטגוריות" aria-label="קטגוריות"></nav>
 
 <div id="tags-wrap" class="hidden">
   <div id="tags"></div>
-  <button id="tags-toggle" class="hidden"></button>
+  <button id="tags-toggle" class="btn btn-text hidden" type="button"></button>
 </div>
 
 <div id="home" class="hidden"></div>
 <div id="view-title" class="hidden"></div>
 
-<div id="loading"><div class="spinner"></div><p data-t="טוען תוספים...">טוען תוספים...</p></div>
-<div id="error" class="hidden"><span class="icon" id="error-icon"></span><div id="error-body"></div></div>
+<div id="loading" role="status">
+  <span class="sr-only" data-t="טוען תוספים...">טוען תוספים...</span>
+  <!-- שלד טעינה: שישה כרטיסים ריקים באותן מידות כמו כרטיס תוסף -->
+  <div class="skeleton-grid" aria-hidden="true">
+    <div class="skeleton-card"><div class="card-head"><span class="skeleton sk-icon"></span><span class="sk-lines"><span class="skeleton sk-title"></span><span class="skeleton sk-meta"></span></span></div><span class="skeleton sk-line"></span><span class="skeleton sk-line sk-short"></span><span class="skeleton sk-btn"></span></div>
+    <div class="skeleton-card"><div class="card-head"><span class="skeleton sk-icon"></span><span class="sk-lines"><span class="skeleton sk-title"></span><span class="skeleton sk-meta"></span></span></div><span class="skeleton sk-line"></span><span class="skeleton sk-line sk-short"></span><span class="skeleton sk-btn"></span></div>
+    <div class="skeleton-card"><div class="card-head"><span class="skeleton sk-icon"></span><span class="sk-lines"><span class="skeleton sk-title"></span><span class="skeleton sk-meta"></span></span></div><span class="skeleton sk-line"></span><span class="skeleton sk-line sk-short"></span><span class="skeleton sk-btn"></span></div>
+    <div class="skeleton-card"><div class="card-head"><span class="skeleton sk-icon"></span><span class="sk-lines"><span class="skeleton sk-title"></span><span class="skeleton sk-meta"></span></span></div><span class="skeleton sk-line"></span><span class="skeleton sk-line sk-short"></span><span class="skeleton sk-btn"></span></div>
+    <div class="skeleton-card"><div class="card-head"><span class="skeleton sk-icon"></span><span class="sk-lines"><span class="skeleton sk-title"></span><span class="skeleton sk-meta"></span></span></div><span class="skeleton sk-line"></span><span class="skeleton sk-line sk-short"></span><span class="skeleton sk-btn"></span></div>
+    <div class="skeleton-card"><div class="card-head"><span class="skeleton sk-icon"></span><span class="sk-lines"><span class="skeleton sk-title"></span><span class="skeleton sk-meta"></span></span></div><span class="skeleton sk-line"></span><span class="skeleton sk-line sk-short"></span><span class="skeleton sk-btn"></span></div>
+  </div>
+</div>
+<div id="error" class="state-card hidden" role="alert"><span class="state-icon" id="error-icon"></span><div id="error-body"></div></div>
 <div id="grid" class="hidden"></div>
-<div id="empty" class="hidden"><p data-t="לא נמצאו תוספים לפי הסינון.">לא נמצאו תוספים לפי הסינון.</p></div>
+<div id="empty" class="state-card hidden" role="status">
+  <span class="state-icon"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 0 0 9.5 3C6.08 3 3.28 5.64 3.03 9h2.02C5.3 6.75 7.18 5 9.5 5 11.99 5 14 7.01 14 9.5S11.99 14 9.5 14c-.17 0-.33-.03-.5-.05v2.02c.17.02.33.03.5.03 1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5z"/><path d="M6.47 10.82 4 13.29l-2.47-2.47-.71.71L3.29 14 .82 16.47l.71.71L4 14.71l2.47 2.47.71-.71L4.71 14l2.47-2.47z"/></svg></span>
+  <p class="state-title" data-t="לא נמצאו תוספים">לא נמצאו תוספים</p>
+  <p class="state-desc" data-t="נסו לשנות את החיפוש או את הסינון.">נסו לשנות את החיפוש או את הסינון.</p>
+</div>
 
 <div id="detail-page" class="hidden"></div>
 
@@ -882,29 +1135,29 @@
 </div>
 
 <div id="updates-backdrop" class="hidden">
-  <div id="updates-modal">
+  <div id="updates-modal" role="dialog" aria-modal="true" aria-labelledby="updates-title">
     <div class="modal-header">
-      <span class="modal-header-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></span>
       <h2 id="updates-title"></h2>
-      <button class="modal-close" id="updates-close">✕</button>
+      <span class="title-ornament" aria-hidden="true"></span>
+      <button class="icon-btn modal-close" id="updates-close" type="button" data-t-title="סגור" title="סגור" data-t-aria-label="סגור" aria-label="סגור"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></button>
     </div>
     <div class="modal-body" id="updates-list"></div>
     <div class="modal-footer">
-      <button class="update-all-btn" id="update-all-btn" data-t="עדכן הכל">עדכן הכל</button>
+      <button class="btn btn-md btn-filled" id="update-all-btn" type="button" data-t="עדכן הכל">עדכן הכל</button>
     </div>
   </div>
 </div>
 
-<div id="lightbox" class="hidden">
-  <button id="lightbox-close">✕</button>
+<div id="lightbox" class="hidden" role="dialog" aria-modal="true" data-t-aria-label="צילום מסך" aria-label="צילום מסך">
+  <button class="icon-btn" id="lightbox-close" type="button" data-t-title="סגור" title="סגור" data-t-aria-label="סגור" aria-label="סגור"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></button>
   <img id="lightbox-img" src="" alt="">
 </div>
 
-<div id="new-toast" class="hidden">
-  <span class="toast-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.6 4.6L18 9l-4.4 1.4L12 15l-1.6-4.6L6 9l4.4-1.4L12 3z"/><path d="M19 14l.8 2.2L22 17l-2.2.8L19 20l-.8-2.2L16 17l2.2-.8L19 14z"/></svg></span>
+<div id="new-toast" class="hidden" role="status">
+  <span class="toast-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.6 4.6L18 9l-4.4 1.4L12 15l-1.6-4.6L6 9l4.4-1.4L12 3z"/><path d="M19 14l.8 2.2L22 17l-2.2.8L19 20l-.8-2.2L16 17l2.2-.8L19 14z"/></svg></span>
   <span class="toast-text" id="new-toast-text"></span>
-  <button class="toast-view" id="new-toast-view" data-t="צפה">צפה</button>
-  <button class="toast-close" id="new-toast-close" data-t-title="סגור" title="סגור">✕</button>
+  <button class="btn btn-text toast-view" id="new-toast-view" type="button" data-t="צפה">צפה</button>
+  <button class="icon-btn toast-close" id="new-toast-close" type="button" data-t-title="סגור" title="סגור" data-t-aria-label="סגור" aria-label="סגור"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></button>
 </div>
 
 <script>
@@ -931,12 +1184,14 @@
     return out;
   }
 
-  // טקסט סטטי ב-HTML מסומן ב-data-t / data-t-title / data-t-placeholder,
+  // טקסט סטטי ב-HTML מסומן ב-data-t / data-t-title / data-t-placeholder /
+  // data-t-aria-label (השם הנגיש של כפתורי אייקון ושדות בלי תווית גלויה),
   // כשהערך הוא מחרוזת המקור בעברית — כך אפשר לתרגם שוב בכל החלפת שפה.
   function translateStatic() {
     document.querySelectorAll('[data-t]').forEach(el => { el.textContent = t(el.dataset.t); });
     document.querySelectorAll('[data-t-title]').forEach(el => { el.title = t(el.dataset.tTitle); });
     document.querySelectorAll('[data-t-placeholder]').forEach(el => { el.placeholder = t(el.dataset.tPlaceholder); });
+    document.querySelectorAll('[data-t-aria-label]').forEach(el => { el.setAttribute('aria-label', t(el.dataset.tAriaLabel)); });
     document.title = t('חנות תוספים');
   }
 
@@ -1189,11 +1444,12 @@
       const row = document.createElement('div');
       row.className = 'update-row';
       row.innerHTML = `
+        ${pluginIconHtml(plugin, 'plugin-icon-sm')}
         <div class="update-info">
-          <div class="update-name">${esc(plugin.name)}</div>
+          <div class="update-name" dir="auto" title="${esc(plugin.name)}">${esc(plugin.name)}</div>
           <div class="update-versions">${esc(t('{from} ← {to}', { from: installed.version, to: plugin.version }))}</div>
         </div>
-        <button class="update-btn" data-url="${esc(downloadUrl)}" data-update="1">${esc(t('עדכן'))}</button>`;
+        <button class="btn btn-tonal update-btn" type="button" data-url="${esc(downloadUrl)}" data-update="1">${esc(t('עדכן'))}</button>`;
       list.appendChild(row);
     });
 
@@ -1343,19 +1599,11 @@
     refreshBtn.classList.remove('spinning');
   }
 
-  // ── ערכת צבעים: מושכים כמה שיותר צבעים מ-theme האמיתי של אוצריא ──────
-  //    (רקע, טקסט, מסגרות, הדגשה, שגיאה). הפלטה החמה ב-:root היא רק ברירת
-  //    מחדל אם theme לא נמסר. צבעי סטטוס/צללים נשארים מקומיים (אין להם תפקיד
-  //    מתאים ב-Material של אוצריא) — ראה body.dark-mode.
-  function darken(hex, amt) {
-    const m = /^#?([0-9a-fA-F]{6})$/.exec(hex && hex.trim());
-    if (!m) return hex;
-    const n = parseInt(m[1], 16);
-    const r = Math.round(((n >> 16) & 255) * (1 - amt));
-    const g = Math.round(((n >> 8) & 255) * (1 - amt));
-    const b = Math.round((n & 255) * (1 - amt));
-    return '#' + (1 << 24 | r << 16 | g << 8 | b).toString(16).slice(1);
-  }
+  // ── ערכת צבעים: כל תפקידי הצבע מגיעים מ-theme האמיתי של אוצריא ─────────
+  //    (משטחים, טקסט, קווים, primary/secondaryContainer, שגיאה, inverse, scrim).
+  //    הפלטה ב-:root (של אתר החנות) היא רק ברירת מחדל אם theme לא נמסר. שכבות
+  //    הריחוף נגזרות ב-CSS (color-mix), ולכן אין כאן חישובי צבע. דירוג ותגי מצב
+  //    נשארים מקומיים (אין להם תפקיד מתאים ב-Material של אוצריא) — ראה body.dark-mode.
 
   // גופן הממשק בלבד: uiFontFamily (מ-0.9.97). fontFamily של ה-theme הוא גופן
   // קריאת הספרים — גופן עם תגיות שמצויר ל-25px, ובכפתור בן 12px הוא יוצא מטושטש
@@ -1370,7 +1618,8 @@
 
   function applyTheme(theme) {
     if (!theme) return;
-    document.body.classList.toggle('dark-mode', theme.mode === 'dark');
+    const dark = theme.mode === 'dark';
+    document.body.classList.toggle('dark-mode', dark);
     applyTypography(theme.typography);
     const cs = theme.colorScheme;
     if (!cs) return;
@@ -1378,34 +1627,44 @@
     const set = (k, v) => { if (v) root.style.setProperty(k, v); };
 
     const high = cs.surfaceContainerHigh || cs.surface;            // רקע הסרגל העליון של אוצריא
-    const pageBg = cs.surfaceContainer || high;                    // שכבת רקע עדינה מתחת לפס
-    const onVar = cs.onSurfaceVariant || cs.onSurface;             // טקסט משני
-    const outlineSoft = cs.outlineVariant || cs.outline;          // מסגרת עדינה
+    const container = cs.surfaceContainer || high;
+    const low = cs.surfaceContainerLow || cs.surface;
 
-    // רקעים
-    set('--color-surface', pageBg);                               // רקע כללי של הדף
-    set('--color-surface-card', cs.surface);                      // כרטיסים/כותרת/חלוניות
-    set('--color-surface-soft', pageBg);                          // שדות קלט, סרגל תגיות
-    set('--color-surface-muted', cs.surfaceContainerHighest);     // צ'יפים, badge גרסה
-    set('--color-placeholder', cs.surfaceContainerHighest);       // רקע placeholder לתמונה
+    // רקעים — כמו באתר, הכרטיס תמיד "מעל" הדף: בבהיר surface הוא הבהיר ביותר, ולכן
+    // הוא הכרטיס והדף surfaceContainer; בכהה surface הוא הכהה ביותר, ולכן הוא הדף
+    // והכרטיס surfaceContainerLow.
+    set('--color-background', dark ? cs.surface : container);    // רקע הדף מתחת לפס
+    set('--color-surface', dark ? low : cs.surface);              // כרטיסים, שדות, שבבים
+    set('--color-surface-container-low', low);                    // אריח הממוצע בלוח הדירוגים
+    set('--color-surface-container', container);                  // אריח אייקון, מסגרת צילום מסך
+    set('--color-surface-container-high', high);                  // פס הכותרת, חלונית, שלד טעינה
+    set('--color-surface-container-highest', cs.surfaceContainerHighest || high);  // תג ניטרלי
     // טקסט
     set('--color-on-surface', cs.onSurface);
-    set('--color-text', onVar);
-    set('--color-text-muted', onVar);
-    set('--color-text-faint', onVar);
-    set('--color-icon-faint', onVar);
-    // מסגרות ומפרידים
-    set('--color-outline', outlineSoft);
-    set('--color-outline-strong', cs.outline);
-    set('--color-divider', outlineSoft);
+    set('--color-on-surface-variant', cs.onSurfaceVariant || cs.onSurface);
+    // קווים — outline למסגרת שדה/כפתור, outlineVariant למפרידים ולשבבים
+    set('--color-outline', cs.outline);
+    set('--color-outline-variant', cs.outlineVariant || cs.outline);
+    // הדגשה — כפתור מלא, מסגרת שבב נבחר, טבעת פוקוס
+    set('--color-primary', cs.primary);
+    set('--color-on-primary', cs.onPrimary);
+    // טונלי — כפתור טונלי, שבב נבחר, אריח אייקון, תג "יציב". מארח שאינו שולח את
+    // התפקיד מקבל גוון של primary מעל המשטח (קירוב של secondaryContainer).
+    set('--color-secondary-container', cs.secondaryContainer
+      || 'color-mix(in srgb, var(--color-primary) 16%, var(--color-surface))');
+    set('--color-on-secondary-container', cs.onSecondaryContainer || cs.onSurface);
     // שגיאה
     set('--color-error', cs.error);
-    // הדגשה — כפתורים ראשיים, תגית פעילה, טוסט
-    set('--color-accent', cs.primary);
-    set('--color-on-accent', cs.onPrimary);
-    set('--color-primary-hover', darken(cs.primary, 0.12));
-    // רקע פס הכותרת — אותו צבע כמו הסרגל העליון של מסכי הספרים באוצריא
-    set('--color-surface-container-high', high);
+    set('--color-error-container', cs.errorContainer
+      || 'color-mix(in srgb, var(--color-error) 14%, var(--color-surface))');
+    set('--color-on-error-container', cs.onErrorContainer || cs.error);
+    // הודעת "תוסף חדש" (snackbar) — המשטח ההפוך
+    set('--color-inverse-surface', cs.inverseSurface || cs.onSurface);
+    set('--color-on-inverse-surface', cs.onInverseSurface || cs.surface);
+    set('--color-inverse-primary', cs.inversePrimary || cs.onInverseSurface || cs.surface);
+    // החשכה מאחורי חלונית וצללים
+    set('--color-scrim', cs.scrim || cs.shadow);
+    set('--color-shadow', cs.shadow || cs.scrim);
   }
 
   // ה-theme והשפה מגיעים כבר ב-plugin.boot (ללא הרשאה); נתפוס אותם מוקדם ככל האפשר.
@@ -1502,12 +1761,20 @@
   }
 
   // ── סרגל הקטגוריות ──
-  function makeCatChip(label, key, onClick) {
+  // שבב קטגוריה; count — מספר שקט אחרי השם, "(12)" (כמו ui/Chip באתר)
+  function makeCatChip(label, key, onClick, count) {
     const btn = document.createElement('button');
-    btn.className = 'cat-chip';
+    btn.type = 'button';
+    btn.className = 'chip cat-chip';
     btn.dataset.key = key;
     btn.textContent = label;
     btn.onclick = onClick;
+    if (count !== undefined) {
+      const span = document.createElement('span');
+      span.className = 'chip-count';
+      span.textContent = t('({n})', { n: fmtNum(count) });
+      btn.appendChild(span);
+    }
     return btn;
   }
 
@@ -1525,25 +1792,18 @@
       }));
     }
     cats.forEach(c => {
-      const chip = makeCatChip(c.name, 'cat:' + c.slug, () => {
+      bar.appendChild(makeCatChip(c.name, 'cat:' + c.slug, () => {
         clearSearch();
         currentView = { type: 'category', slug: c.slug, name: c.name };
         renderCurrentView();
-      });
-      const count = document.createElement('span');
-      count.className = 'chip-count';
-      count.textContent = `(${c.pluginCount})`;
-      chip.appendChild(count);
-      bar.appendChild(chip);
+      }, c.pluginCount));
     });
-    // "כל התוספים" — מוצא אחרון, מוצנע בסוף השורה
-    const all = makeCatChip(t('כל התוספים ({n})', { n: storeHome.totalPublicPlugins || allPlugins.length }), 'all', () => {
+    // "כל התוספים" — מוצא אחרון, בסוף השורה
+    bar.appendChild(makeCatChip(t('כל התוספים'), 'all', () => {
       clearSearch();
       currentView = { type: 'all' };
       renderCurrentView();
-    });
-    all.classList.add('all-chip');
-    bar.appendChild(all);
+    }, storeHome.totalPublicPlugins || allPlugins.length));
     show('cats-bar');
   }
 
@@ -1552,7 +1812,10 @@
       : currentView.type === 'home' ? 'home'
       : currentView.type === 'all' ? 'all'
       : 'cat:' + currentView.slug;
-    document.querySelectorAll('.cat-chip').forEach(b => b.classList.toggle('active', b.dataset.key === key));
+    document.querySelectorAll('.cat-chip').forEach(b => {
+      b.classList.toggle('active', b.dataset.key === key);
+      if (b.dataset.key === key) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
+    });
   }
 
   // ── ניתוב תצוגה ──
@@ -1587,7 +1850,7 @@
   function setViewTitle(title, sub) {
     const el = document.getElementById('view-title');
     if (!title) { hide('view-title'); return; }
-    el.innerHTML = `<h2>${esc(title)}</h2>${sub ? `<p>${esc(sub)}</p>` : ''}`;
+    el.innerHTML = `${headingHtml(title, 'h2')}${sub ? `<p>${esc(sub)}</p>` : ''}`;
     show('view-title');
   }
 
@@ -1617,7 +1880,7 @@
     const featured = toCatalogList(storeHome.featured);
     if (featured.length) {
       const sec = document.createElement('section');
-      sec.innerHTML = `<div class="home-section-head"><div><div class="home-section-title">${esc(t('תוספים נבחרים'))}</div></div></div>`;
+      sec.innerHTML = `<div class="home-section-head"><div class="home-section-head-text">${headingHtml(t('תוספים נבחרים'), 'h2')}</div></div>`;
       const grid = document.createElement('div');
       grid.className = 'home-grid';
       featured.forEach(p => grid.appendChild(makeCard(p)));
@@ -1632,17 +1895,17 @@
       const head = document.createElement('div');
       head.className = 'home-section-head';
       head.innerHTML = `
-        <div>
-          <div class="home-section-title">${esc(c.name)}</div>
-          ${c.description ? `<div class="home-section-desc">${esc(c.description)}</div>` : ''}
+        <div class="home-section-head-text">
+          ${headingHtml(c.name, 'h2')}
+          ${c.description ? `<p class="home-section-desc">${esc(c.description)}</p>` : ''}
         </div>
-        <button class="home-see-all">${esc(t('לכל הקטגוריה ({n}) ←', { n: c.pluginCount }))}</button>`;
+        <button class="btn btn-text home-see-all" type="button">${esc(t('לכל הקטגוריה ({n}) ←', { n: c.pluginCount }))}</button>`;
       head.querySelector('.home-see-all').onclick = () => {
         currentView = { type: 'category', slug: c.slug, name: c.name };
         renderCurrentView();
       };
       const row = document.createElement('div');
-      row.className = 'home-row';
+      row.className = 'home-row scroll-x';
       plugins.forEach(p => row.appendChild(makeCard(p)));
       sec.appendChild(head);
       sec.appendChild(row);
@@ -1652,7 +1915,7 @@
     // פס גילוי מוצנע אל הרשימה המלאה
     const strip = document.createElement('div');
     strip.className = 'home-footer-strip';
-    strip.innerHTML = `${esc(t('לא מצאתם את מה שחיפשתם? '))}<button>${esc(t('עיינו בכל התוספים ({n}) ←', { n: storeHome.totalPublicPlugins || allPlugins.length }))}</button>`;
+    strip.innerHTML = `${esc(t('לא מצאתם את מה שחיפשתם? '))}<button class="btn btn-text" type="button">${esc(t('עיינו בכל התוספים ({n}) ←', { n: storeHome.totalPublicPlugins || allPlugins.length }))}</button>`;
     strip.querySelector('button').onclick = () => {
       currentView = { type: 'all' };
       renderCurrentView();
@@ -1758,7 +2021,7 @@
     }
 
     const rowH = tags.children[0].offsetHeight;
-    const gap = 6;
+    const gap = parseFloat(getComputedStyle(tags).rowGap) || 0;   // הרווח בין השורות, מה-CSS
     const collapsedMax = rowH * 3 + gap * 2;
 
     if (tags.scrollHeight <= collapsedMax + 1) {
@@ -1793,7 +2056,8 @@
 
   function makeTag(label, value, active) {
     const btn = document.createElement('button');
-    btn.className = 'tag-btn' + (active ? ' active' : '');
+    btn.type = 'button';
+    btn.className = 'chip tag-btn' + (active ? ' active' : '');
     btn.textContent = label;
     btn.dataset.value = value;
     btn.onclick = () => {
@@ -1824,31 +2088,26 @@
     fillGrid(list);
   }
 
+  // כרטיס תוסף (כמו PluginCard באתר) — כל פריט במקום קבוע, כדי שהעין תעבור בקו
+  // ישר לאורך שורת כרטיסים. תגיות, מפתח ותאריך עדכון אינם בכרטיס (בכוונה — רעש
+  // לסריקה); הם בדף הפרטים. שם התוסף הוא כפתור שנמתח על הכרטיס כולו (CSS).
   function makeCard(p) {
     const art = document.createElement('article');
     art.className = 'card';
 
     const downloadUrl = p.downloadUrl.startsWith('http') ? p.downloadUrl : BASE + p.downloadUrl;
-    const hasImg = !!p.image;
-    const imgUrl = hasImg ? (p.image.startsWith('http') ? p.image : BASE + p.image) : DEFAULT_IMG;
 
     art.innerHTML = `
-      <img class="card-img${hasImg ? '' : ' is-default'}" src="${esc(imgUrl)}" alt="${esc(p.name)}" loading="lazy">
-      <div class="card-body">
-        <div class="card-badges">
-          <span class="badge ${statusClass[p.status] || ''}">${esc(statusLabel(p.status) || p.status)}</span>
-          <span class="badge badge-version">${esc(t('גרסה {v}', { v: p.version }))}</span>
-          ${downloadsBadge(p)}
-          ${ratingBadge(p)}
+      <div class="card-head">
+        ${pluginIconHtml(p)}
+        <div class="card-head-text">
+          <h3 class="card-title"><button class="card-link" type="button" dir="auto"><span class="card-title-text">${esc(p.name)}</span></button></h3>
+          ${pluginMetaHtml(p)}
         </div>
-        <div class="card-title">${esc(p.name)}</div>
-        <div class="card-desc">${esc(p.shortDescription || '')}</div>
-        ${(p.tags || []).length > 0
-          ? `<div class="card-tags">${p.tags.slice(0,4).map(tag => `<span class="card-tag">${esc(tag)}</span>`).join('')}</div>`
-          : ''}
-        <div class="card-actions">
-          ${installButtonHtml(p, downloadUrl, 'btn btn-primary install-btn', 'btn btn-secondary')}
-        </div>
+      </div>
+      <p class="card-desc" dir="auto">${esc(p.shortDescription || '')}</p>
+      <div class="card-actions">
+        ${installButtonHtml(p, downloadUrl, 'btn btn-tonal install-btn', 'btn btn-outlined')}
       </div>`;
 
     art.addEventListener('click', (e) => {
@@ -1880,95 +2139,78 @@
     scrollContentTop();
   }
 
+  // דף התוסף (כמו עמוד התוסף באתר): ראש העמוד — אייקון, שם, תג סטטוס, תיאור קצר
+  // ופעולה; רצועת נתוני המפתח; ומתחת אזורים עם כותרת: צילומי מסך, תיאור מלא (רק
+  // כשהוא שונה מהקצר), מידע כללי ותגיות, ודירוג המשתמשים.
   function showDetail(p) {
     showDetailPage();
 
     const downloadUrl = p.downloadUrl.startsWith('http') ? p.downloadUrl : BASE + p.downloadUrl;
-    const hasImg = !!p.image;
-    const imgUrl = hasImg ? (p.image.startsWith('http') ? p.image : BASE + p.image) : DEFAULT_IMG;
     const screenshots = (p.screenshots || []).map(s => s.startsWith('http') ? s : BASE + s);
+    const shortDesc = String(p.shortDescription || '').trim();
+    const fullDesc = String(p.description || '').trim();
+    const heroDesc = shortDesc || fullDesc;
+    const showAbout = !!fullDesc && fullDesc !== heroDesc;
+
+    const infoSection = `
+      <section class="detail-section">
+        ${headingHtml(t('מידע כללי'), 'h3', 'section-head')}
+        <dl class="info-list">${infoRowsHtml(p)}</dl>
+        ${(p.tags || []).length > 0 ? `
+        <p class="detail-sub">${esc(t('תגיות'))}</p>
+        <div class="detail-tags">
+          ${p.tags.map(tag => `<button class="chip detail-tag" type="button" data-tag="${esc(tag)}">${esc(tag)}</button>`).join('')}
+        </div>` : ''}
+      </section>`;
+    const ratingSection = `
+      <section class="detail-section">
+        ${headingHtml(t('דירוג המשתמשים'), 'h3', 'section-head')}
+        ${ratingPanelHtml(p)}
+      </section>`;
 
     const detail = document.getElementById('detail-page');
     detail.innerHTML = `
-      <button class="back-btn" id="back-btn"><span class="back-arrow">${t('→')}</span> ${esc(t('חזרה לחנות'))}</button>
-      <div class="detail-header">
-        <img class="detail-main-img${hasImg ? '' : ' is-default'}" src="${esc(imgUrl)}" alt="${esc(p.name)}" loading="lazy">
-        <div class="detail-info">
-          <div class="detail-name">${esc(p.name)}</div>
-          <div class="detail-badges">
-            <span class="badge ${statusClass[p.status] || ''}">${esc(statusLabel(p.status) || p.status)}</span>
-            <span class="badge badge-version">${esc(t('גרסה {v}', { v: p.version }))}</span>
-            ${downloadsBadge(p)}
-            ${ratingBadge(p)}
+      <button class="btn btn-text back-btn" id="back-btn" type="button">${ARROW_BACK_ICON}${esc(t('חזרה לחנות'))}</button>
+      <div>
+        <div class="detail-hero-head">
+          ${pluginIconHtml(p, 'plugin-icon-hero')}
+          <div class="detail-hero-text">
+            ${headingHtml(p.name, 'h2', '', 'detail-name')}
+            <div class="detail-badges">
+              <span class="badge badge-md ${statusClass[p.status] || ''}">${esc(statusLabel(p.status) || p.status)}</span>
+            </div>
           </div>
-          <div class="detail-desc">${esc(p.description || p.shortDescription || '')}</div>
-          <div class="detail-actions">
-            ${installButtonHtml(p, downloadUrl, 'detail-install-btn', 'detail-install-btn is-open')}
-          </div>
+        </div>
+        ${heroDesc ? `<div class="detail-desc" dir="auto">${esc(heroDesc)}</div>` : ''}
+        <div class="detail-actions">
+          ${installButtonHtml(p, downloadUrl, 'btn btn-md btn-filled detail-install-btn', 'btn btn-md btn-outlined detail-install-btn is-open')}
         </div>
       </div>
-      <div class="detail-grid">
-        <div class="detail-card">
-          <h2><span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></span> ${esc(t('מידע כללי'))}</h2>
-          <div class="info-grid">
-            <div class="info-cell">
-              <div class="info-label">${esc(t('גרסה'))}</div>
-              <div class="info-value">${esc(p.version)}</div>
-            </div>
-            <div class="info-cell">
-              <div class="info-label">${esc(t('סטטוס'))}</div>
-              <div class="info-value">${esc(statusLabel(p.status) || p.status)}</div>
-            </div>
-            <div class="info-cell">
-              <div class="info-label">${esc(t('הורדות'))}</div>
-              <div class="info-value">${fmtNum(p.downloadCount)}</div>
-            </div>
-            ${p.pluginFileSize > 0 ? `
-            <div class="info-cell">
-              <div class="info-label">${esc(t('גודל'))}</div>
-              <div class="info-value">${fmtSize(p.pluginFileSize)}</div>
-            </div>` : ''}
-            ${p.author ? `
-            <div class="info-cell">
-              <div class="info-label">${esc(t('מפתח'))}</div>
-              <div class="info-value">${esc(p.author)}</div>
-            </div>` : ''}
-            ${p.updatedAt ? `
-            <div class="info-cell">
-              <div class="info-label">${esc(t('עודכן'))}</div>
-              <div class="info-value">${esc(formatDate(p.fileUpdatedAt || p.originalDate || p.updatedAt))}</div>
-            </div>` : ''}
-            ${p.compatibleWith ? `
-            <div class="info-cell full">
-              <div class="info-label">${esc(t('תאימות'))}</div>
-              <div class="info-value">${esc(p.compatibleWith)}</div>
-            </div>` : ''}
-            <div class="info-cell full">
-              <div class="info-label">${esc(t('חיבור אינטרנט'))}</div>
-              <div class="info-value">${esc(p.requiresNetwork ? t('נדרש') : t('✓ לא נדרש'))}</div>
-            </div>
-            ${p.newerIncompatibleVersion ? `
-            <div class="info-cell full">
-              <div class="info-label">${esc(t('שים לב'))}</div>
-              <div class="info-value">${esc(t('מוצגת הגרסה התואמת לגרסת אוצריא שלך. קיימת גרסה חדשה יותר ({v}) הדורשת גרסת אוצריא מתקדמת יותר.', { v: p.newerIncompatibleVersion }))}</div>
-            </div>` : ''}
+      ${keyFactsHtml(p)}
+      ${p.newerIncompatibleVersion ? `
+      <div class="detail-notice">${INFO_ICON}<div><strong>${esc(t('שים לב'))}:</strong> ${esc(t('מוצגת הגרסה התואמת לגרסת אוצריא שלך. קיימת גרסה חדשה יותר ({v}) הדורשת גרסת אוצריא מתקדמת יותר.', { v: p.newerIncompatibleVersion }))}</div></div>` : ''}
+      <div class="detail-sections">
+        ${screenshots.length > 0 ? `
+        <section class="detail-section">
+          ${headingHtml(t('צילומי מסך'), 'h3', 'section-head')}
+          <div class="screenshots-row scroll-x">
+            ${screenshots.map(s => `<img class="screenshot-thumb" src="${esc(s)}" alt="${esc(t('צילום מסך'))}" loading="lazy">`).join('')}
           </div>
+        </section>` : ''}
+        ${showAbout ? `
+        <div class="detail-columns has-desc">
+          <section class="detail-section">
+            ${headingHtml(t('תיאור'), 'h3', 'section-head')}
+            <div class="detail-about" dir="auto">${esc(fullDesc)}</div>
+          </section>
+          ${infoSection}
         </div>
-        <div class="detail-card">
-          <h2><span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg></span> ${esc(t('תגיות'))}</h2>
-          <div class="detail-tags">
-            ${(p.tags || []).map(tag => `<span class="detail-tag" data-tag="${esc(tag)}">${esc(tag)}</span>`).join('')}
-          </div>
-        </div>
-        ${ratingCardHtml(p)}
-      </div>
-      ${screenshots.length > 0 ? `
-      <div class="screenshots-section">
-        <h2><span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></span> ${esc(t('צילומי מסך'))}</h2>
-        <div class="screenshots-row">
-          ${screenshots.map(s => `<img class="screenshot-thumb" src="${esc(s)}" alt="${esc(t('צילום מסך'))}" loading="lazy">`).join('')}
-        </div>
-      </div>` : ''}`;
+        ${ratingSection}` : `
+        <div class="detail-columns">
+          ${infoSection}
+          ${ratingSection}
+        </div>`}
+      </div>`;
 
     document.getElementById('back-btn').onclick = showListPage;
 
@@ -2005,26 +2247,36 @@
 
   // כפתור התקנה לפי מצב: מותקן ועדכני → כפתור פתיחה (בגוון המשני); מותקן עם
   // גרסה חדשה בחנות → "עדכון"; לא מותקן → "התקנה".
-  // openClassName הוא הסגנון של מצב "מותקן" — הכפתור האפור שפותח את התוסף.
+  // openClassName הוא הסגנון של מצב "מותקן" — הכפתור המשני שפותח את התוסף.
   function installButtonHtml(p, downloadUrl, className, openClassName) {
     const state = installStateOf(p);
     if (state === 'installed') {
       const pluginId = installedIdOf(p);
       // בלי pluginId (אוצריא ישנה שאינה מחזירה אותו) אין מה לפתוח — נשאר מידע בלבד
-      if (!pluginId) return `<button class="${className}" disabled>${esc(t('מותקן ✓'))}</button>`;
-      return `<button class="${openClassName || className} open-btn" data-plugin-id="${esc(pluginId)}" title="${esc(t('פתיחת התוסף'))}">${esc(t('מותקן ✓ · פתיחה'))}</button>`;
+      if (!pluginId) return `<button class="${openClassName || className}" type="button" disabled>${esc(t('מותקן ✓'))}</button>`;
+      return `<button class="${openClassName || className} open-btn" type="button" data-plugin-id="${esc(pluginId)}" title="${esc(t('פתיחת התוסף'))}">${esc(t('מותקן ✓ · פתיחה'))}</button>`;
     }
     const label = state === 'update' ? t('עדכון') : t('התקנה');
-    return `<button class="${className}" data-url="${esc(downloadUrl)}"${state === 'update' ? ' data-update="1"' : ''}>${esc(label)}</button>`;
+    const icon = state === 'update' ? UPDATE_ICON : DOWNLOAD_ICON;
+    return `<button class="${className}" type="button" data-url="${esc(downloadUrl)}"${state === 'update' ? ' data-update="1"' : ''}>${icon}${esc(label)}</button>`;
   }
 
   // ── כלים ─────────────────────────────────────────────────────────
-  // אייקון הורדה (feather download)
-  const DOWNLOAD_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
-  // כוכב מלא (feather star) — צבוע ב-currentColor, לשתי שכבות המילוי
-  const STAR_ICON = '<svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
-  // כוכב קווי לכותרת לוח הדירוגים (באותו סגנון כמו שאר כותרות הכרטיסים)
-  const STAR_OUTLINE_ICON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
+  // אייקונים — מסלולי Material Symbols / Material Icons (Apache-2.0), מוטמעים כ-SVG
+  // ב-currentColor: בלי גופן אייקונים ובלי רשת. דקורטיביים בלבד (aria-hidden) —
+  // המשמעות תמיד בטקסט שלצדם.
+  const svgIcon = (d, viewBox = '0 0 24 24') =>
+    `<svg viewBox="${viewBox}" fill="currentColor" aria-hidden="true"><path d="${d}"/></svg>`;
+  const DOWNLOAD_ICON = svgIcon('M480-320 280-520l56-58 104 104v-326h80v326l104-104 56 58-200 200ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z', '0 -960 960 960');
+  const UPDATE_ICON = svgIcon('M21 10.12h-6.78l2.74-2.82c-2.73-2.7-7.15-2.8-9.88-.1-2.73 2.71-2.73 7.08 0 9.79s7.15 2.71 9.88 0C18.32 15.65 19 14.08 19 12.1h2c0 1.98-.88 4.55-2.64 6.29-3.51 3.48-9.21 3.48-12.72 0-3.5-3.47-3.53-9.11-.02-12.58s9.14-3.47 12.65 0L21 3v7.12zM12.5 8v4.25l3.5 2.08-.72 1.21L11 13V8h1.5z');
+  // arrow_forward — "חזרה" מצביע ימינה ב-rtl (ב-ltr ה-CSS הופך אותו)
+  const ARROW_BACK_ICON = svgIcon('M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z');
+  const INFO_ICON = svgIcon('M11 7h2v2h-2zm0 4h2v6h-2zm1-9C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z');
+  const CHECK_ICON = svgIcon('M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z');
+  // כוכב — אותו מסלול כמו באתר; צבוע ב-currentColor, לשתי שכבות המילוי
+  const STAR_ICON = svgIcon('M12 2.6l2.83 5.73 6.32.92-4.58 4.46 1.08 6.3L12 17.03l-5.65 2.98 1.08-6.3-4.58-4.46 6.32-.92z');
+  // חיבור אינטרנט נדרש (feather wifi); "לא נדרש" — OFFLINE_ICON שלמטה
+  const WIFI_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>';
 
   function fmtNum(n) {
     return (Number(n) || 0).toLocaleString(numLocale);
@@ -2038,9 +2290,86 @@
     return `${(n / (1024 * 1024)).toLocaleString(numLocale, { maximumFractionDigits: 1 })} MB`;
   }
 
-  // תגית כמות הורדות. מוצגת תמיד (גם 0), כדי לשמור על מראה אחיד עם האתר.
-  function downloadsBadge(p) {
-    return `<span class="badge badge-downloads" title="${esc(t('כמות הורדות'))}">${DOWNLOAD_ICON}${esc(t('{n} הורדות', { n: fmtNum(p.downloadCount) }))}</span>`;
+  // אייקון התוסף באריח (כרטיס, שורת עדכון, ראש דף הפרטים). בלי תמונה — הלוגו של
+  // אוצריא בחצי הגודל. alt ריק: השם כתוב ממש לצד האייקון.
+  function pluginIconHtml(p, sizeClass) {
+    const src = p.image ? (p.image.startsWith('http') ? p.image : BASE + p.image) : DEFAULT_IMG;
+    return `<span class="plugin-icon${sizeClass ? ' ' + sizeClass : ''}${p.image ? '' : ' is-fallback'}">`
+      + `<img src="${esc(src)}" alt="" loading="lazy"></span>`;
+  }
+
+  // כותרת עם קישוט (קו דק ונקודת זהב, כמו SectionHeading באתר), מיושרת להתחלה.
+  // dir="auto" — שם תוסף או קטגוריה הוא טקסט של המפתח, אולי באנגלית.
+  function headingHtml(text, tag, wrapClass, titleClass) {
+    return `<div class="heading-wrap${wrapClass ? ' ' + wrapClass : ''}">`
+      + `<${tag} class="${titleClass || 'section-title'}" dir="auto">${esc(text)}</${tag}>`
+      + `<span class="title-ornament is-start" aria-hidden="true"></span></div>`;
+  }
+
+  // "גרסה 1.2.0" — המספר ב-<bdi>, כדי שהנקודות לא יתערבבו בטקסט מימין לשמאל
+  function versionHtml(v) {
+    // פונקציית החלפה ולא מחרוזת — כך תווים כמו $& בגרסה אינם מתפרשים כתבנית
+    return esc(t('גרסה {v}')).replace('{v}', () => `<bdi>${esc(v)}</bdi>`);
+  }
+
+  // שורת המטא של כרטיס (כמו PluginMeta באתר):  ★ 4.6 (12)  ⤓ 2,473  גרסה 1.2.0 [בטא]
+  // דירוג רק כשיש מדרגים — "0 כוכבים" היה נראה כדירוג גרוע ולא כהיעדר דירוג. תג
+  // סטטוס רק כשהוא מוסיף מידע (בטא / ניסיוני): "יציב" הוא ברירת המחדל, ומופיע בדף הפרטים.
+  function pluginMetaHtml(p) {
+    const r = ratingOf(p);
+    const rating = r.rated
+      ? `<span class="meta-item meta-rating" title="${esc(t('דירוג ממוצע מתוך {n} מדרגים', { n: fmtNum(r.count) }))}">`
+        + `${STAR_ICON}<span class="meta-strong">${esc(fmtAvg(r.avg))}</span>${esc(t('({n})', { n: fmtNum(r.count) }))}</span>`
+      : '';
+    const status = p.status && p.status !== 'stable'
+      ? `<span class="badge ${statusClass[p.status] || ''}">${esc(statusLabel(p.status) || p.status)}</span>`
+      : '';
+    return `<p class="plugin-meta">${rating}`
+      + `<span class="meta-item" title="${esc(t('כמות הורדות'))}">${DOWNLOAD_ICON}<span class="sr-only">${esc(t('הורדות'))}: </span>${esc(fmtNum(p.downloadCount))}</span>`
+      + `<span class="meta-item meta-version"><span>${versionHtml(p.version)}</span>${status}</span>`
+      + `</p>`;
+  }
+
+  // נתוני המפתח בדף הפרטים (כמו PluginKeyFacts באתר): תווית שקטה למעלה והערך
+  // בולט מתחתיה — דירוג (רק כשיש), הורדות, גרסה, תאימות, מפתח.
+  function keyFactsHtml(p) {
+    const r = ratingOf(p);
+    const facts = [];
+    if (r.rated) {
+      facts.push({
+        label: t('דירוג'),
+        title: t('דירוג ממוצע מתוך {n} מדרגים', { n: fmtNum(r.count) }),
+        value: esc(fmtAvg(r.avg)),
+        sub: `${starsHtml(r.avg)}${esc(t('({n})', { n: fmtNum(r.count) }))}`,
+      });
+    }
+    facts.push({ label: t('הורדות'), value: esc(fmtNum(p.downloadCount)) });
+    facts.push({ label: t('גרסה'), value: `<bdi>${esc(p.version)}</bdi>` });
+    if (p.compatibleWith) facts.push({ label: t('תאימות'), value: `<bdi>${esc(p.compatibleWith)}</bdi>` });
+    if (p.author) facts.push({ label: t('מפתח'), value: `<bdi>${esc(p.author)}</bdi>`, title: p.author });
+    return `<dl class="key-facts">${facts.map(f => `
+      <div class="key-fact"${f.title ? ` title="${esc(f.title)}"` : ''}>
+        <dt>${esc(f.label)}</dt>
+        <dd><span class="key-fact-value">${f.value}</span>${f.sub ? `<span class="key-fact-sub">${f.sub}</span>` : ''}</dd>
+      </div>`).join('')}
+    </dl>`;
+  }
+
+  // "מידע כללי" (כמו PluginInfoList באתר) — שורות תווית/ערך. גודל — רק כשידוע.
+  function infoRowsHtml(p) {
+    const rows = [
+      [t('גרסה'), `<bdi>${esc(p.version)}</bdi>`],
+      [t('סטטוס'), esc(statusLabel(p.status) || p.status)],
+    ];
+    if (p.author) rows.push([t('מפתח'), `<bdi>${esc(p.author)}</bdi>`]);
+    if (p.updatedAt) rows.push([t('עודכן'), esc(formatDate(p.fileUpdatedAt || p.originalDate || p.updatedAt))]);
+    rows.push([t('הורדות'), esc(fmtNum(p.downloadCount))]);
+    if (p.pluginFileSize > 0) rows.push([t('גודל'), `<bdi>${esc(fmtSize(p.pluginFileSize))}</bdi>`]);
+    if (p.compatibleWith) rows.push([t('תאימות'), `<bdi>${esc(p.compatibleWith)}</bdi>`]);
+    rows.push([t('חיבור אינטרנט'),
+      (p.requiresNetwork ? WIFI_ICON : OFFLINE_ICON) + esc(p.requiresNetwork ? t('נדרש') : t('לא נדרש'))]);
+    return rows.map(([label, value]) => `
+      <div class="info-row"><dt>${esc(label)}</dt><dd>${value}</dd></div>`).join('');
   }
 
   // ── דירוגים (תצוגה בלבד) ─────────────────────────────────────────
@@ -2073,49 +2402,41 @@
       + `</span>`;
   }
 
-  // תגית דירוג לכרטיס ולדף הפרטים. תוסף שטרם דורג אינו מקבל תגית כלל
-  // (בשונה מההורדות) — "0 כוכבים" היה נראה כדירוג גרוע ולא כהיעדר דירוג.
-  function ratingBadge(p) {
+  // לוח הדירוגים בדף הפרטים (כמו PluginRatingPanel באתר): הממוצע באריח, התפלגות
+  // 5★→1★ והערה שהדירוג נעשה באתר. בלי דירוגים — רק "עדיין לא דורג" (חמישה פסים
+  // ריקים עם 0 הם רעש).
+  function ratingPanelHtml(p) {
     const r = ratingOf(p);
-    if (!r.rated) return '';
-    return `<span class="badge badge-rating" title="${esc(t('דירוג ממוצע מתוך {n} מדרגים', { n: fmtNum(r.count) }))}">`
-      + starsHtml(r.avg)
-      + `${esc(fmtAvg(r.avg))}<span class="badge-rating-count">${esc(t('({n})', { n: fmtNum(r.count) }))}</span>`
-      + `</span>`;
-  }
+    const score = r.rated
+      ? `<div class="rating-score">
+          <div class="rating-score-num">${esc(fmtAvg(r.avg))}</div>
+          ${starsHtml(r.avg, 'stars-lg')}
+          <div class="rating-score-meta">${esc(t('{n} מדרגים', { n: fmtNum(r.count) }))}</div>
+          ${r.verified > 0
+            ? `<span class="badge badge-success" title="${esc(t('מדרגים שהתקנת התוסף אצלם נרשמה בפועל'))}">${CHECK_ICON}${esc(t('{n} דירוגים מאומתים', { n: fmtNum(r.verified) }))}</span>`
+            : ''}
+        </div>`
+      : `<div class="rating-score">
+          ${starsHtml(0, 'stars-lg')}
+          <div class="rating-score-meta">${esc(t('התוסף עדיין לא דורג'))}</div>
+        </div>`;
+    const rows = r.rated
+      ? `<div class="rating-rows">
+          ${[5, 4, 3, 2, 1].map(star => {
+            const count = Number(r.breakdown[star - 1]) || 0;
+            const pct = r.count > 0 ? (count / r.count) * 100 : 0;
+            return `<div class="rating-row">
+              <span class="rating-row-star">${esc(String(star))}${STAR_ICON}</span>
+              <span class="rating-bar"><span class="rating-bar-fill" style="width:${pct}%"></span></span>
+              <span class="rating-row-count">${esc(fmtNum(count))}</span>
+            </div>`;
+          }).join('')}
+        </div>`
+      : '';
 
-  // לוח הדירוגים בדף הפרטים: הממוצע, התפלגות 5★→1★ והערה שהדירוג נעשה באתר
-  function ratingCardHtml(p) {
-    const r = ratingOf(p);
-    const body = r.rated
-      ? `<div class="rating-summary">
-          <div class="rating-score">
-            <div class="rating-score-num">${esc(fmtAvg(r.avg))}</div>
-            ${starsHtml(r.avg, 'stars-lg')}
-            <div class="rating-score-meta">${esc(t('{n} מדרגים', { n: fmtNum(r.count) }))}</div>
-          </div>
-          <div class="rating-rows">
-            ${[5, 4, 3, 2, 1].map(star => {
-              const count = Number(r.breakdown[star - 1]) || 0;
-              const pct = r.count > 0 ? (count / r.count) * 100 : 0;
-              return `<div class="rating-row">
-                <span class="rating-row-star">${esc(String(star))}${STAR_ICON}</span>
-                <span class="rating-bar"><span class="rating-bar-fill" style="width:${pct}%"></span></span>
-                <span class="rating-row-count">${esc(fmtNum(count))}</span>
-              </div>`;
-            }).join('')}
-          </div>
-        </div>
-        ${r.verified > 0
-          ? `<div class="rating-note"><span class="rating-verified">${esc(t('{n} דירוגים מאומתים', { n: fmtNum(r.verified) }))}</span> — ${esc(t('מדרגים שהתקנת התוסף אצלם נרשמה בפועל'))}</div>`
-          : ''}
-        <div class="rating-note">${esc(t('הדירוג נאסף בדף התוסף באתר החנות'))}</div>`
-      : `<div class="rating-empty">${esc(t('התוסף עדיין לא דורג'))}</div>
-         <div class="rating-note">${esc(t('הדירוג נאסף בדף התוסף באתר החנות'))}</div>`;
-
-    return `<div class="detail-card">
-      <h2><span class="icon">${STAR_OUTLINE_ICON}</span> ${esc(t('דירוג המשתמשים'))}</h2>
-      ${body}
+    return `<div class="rating-panel">
+      <div class="rating-summary${r.rated ? '' : ' is-empty'}">${score}${rows}</div>
+      <p class="rating-note">${esc(t('הדירוג נאסף בדף התוסף באתר החנות'))}</p>
     </div>`;
   }
 
@@ -2136,8 +2457,8 @@
   // ── הודעת שגיאה בטעינה ───────────────────────────────────────────
   // כשאין חיבור לאינטרנט מציגים הסבר פשוט במקום הודעה טכנית (SocketException
   // וכו'), עם כפתור "נסו שוב". שאר השגיאות מוצגות כמו קודם.
-  const ERROR_ICON = '<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--color-error)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
-  const OFFLINE_ICON = '<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="2" y1="2" x2="22" y2="22"/><path d="M8.5 16.5a5 5 0 0 1 7 0"/><path d="M2 8.82a15 15 0 0 1 4.17-2.65"/><path d="M10.66 5c4.01-.36 8.14.9 11.34 3.76"/><path d="M16.85 11.25a10 10 0 0 1 2.22 1.68"/><path d="M5 13a10 10 0 0 1 5.24-2.76"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>';
+  const ERROR_ICON = svgIcon('M11 15h2v2h-2zm0-8h2v6h-2zm.99-5C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z');
+  const OFFLINE_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="2" y1="2" x2="22" y2="22"/><path d="M8.5 16.5a5 5 0 0 1 7 0"/><path d="M2 8.82a15 15 0 0 1 4.17-2.65"/><path d="M10.66 5c4.01-.36 8.14.9 11.34 3.76"/><path d="M16.85 11.25a10 10 0 0 1 2.22 1.68"/><path d="M5 13a10 10 0 0 1 5.24-2.76"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>';
 
   // האם הכשל נובע מחוסר חיבור לרשת (ולא מתשובת שרת כמו HTTP 500).
   function isOfflineError(e) {
@@ -2155,15 +2476,15 @@
       box.classList.add('offline');
       icon.innerHTML = OFFLINE_ICON;
       body.innerHTML =
-        `<p class="offline-title">${esc(t('אין חיבור לאינטרנט'))}</p>` +
-        `<p>${esc(t('חנות התוספים צריכה אינטרנט כדי לעבוד. כשהמחשב יתחבר לאינטרנט — החנות תעבוד כרגיל.'))}</p>` +
-        `<p>${esc(t('אם המחשב הזה לא אמור להיות מחובר לאינטרנט, אפשר להסיר את התוסף, או לעבור למצב "מנותק" בהגדרות התוכנה (בהגדרות של אוצריא עצמה, לא של התוסף).'))}</p>` +
-        `<button class="btn btn-secondary error-retry" type="button">${esc(t('נסו שוב'))}</button>`;
+        `<p class="state-title">${esc(t('אין חיבור לאינטרנט'))}</p>` +
+        `<p class="state-desc">${esc(t('חנות התוספים צריכה אינטרנט כדי לעבוד. כשהמחשב יתחבר לאינטרנט — החנות תעבוד כרגיל.'))}</p>` +
+        `<p class="state-desc">${esc(t('אם המחשב הזה לא אמור להיות מחובר לאינטרנט, אפשר להסיר את התוסף, או לעבור למצב "מנותק" בהגדרות התוכנה (בהגדרות של אוצריא עצמה, לא של התוסף).'))}</p>` +
+        `<button class="btn btn-md btn-filled error-retry" type="button">${esc(t('נסו שוב'))}</button>`;
       body.querySelector('.error-retry').addEventListener('click', () => reload());
     } else {
       box.classList.remove('offline');
       icon.innerHTML = ERROR_ICON;
-      body.innerHTML = `<p>${esc(t('שגיאה בטעינת התוספים: {msg}', { msg: (e && e.message) || '' }))}</p>`;
+      body.innerHTML = `<p class="state-title">${esc(t('שגיאה בטעינת התוספים: {msg}', { msg: (e && e.message) || '' }))}</p>`;
     }
     show('error');
   }
