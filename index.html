@@ -1160,6 +1160,7 @@
   <button class="icon-btn toast-close" id="new-toast-close" type="button" data-t-title="סגור" title="סגור" data-t-aria-label="סגור" aria-label="סגור"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></button>
 </div>
 
+<script src="restore-state.js"></script>
 <script>
   const BASE = 'https://otzaria.org';
   const API = BASE + '/api/plugins';
@@ -1175,6 +1176,7 @@
   // payload.app של plugin.boot (או app.getLocale), ומתעדכנת חי דרך
   // settings.changed עם המפתח key-settings-language.
   let dict = null;                 // המילון הפעיל, או null לעברית
+  let localeRevision = 0;
   let numLocale = 'he-IL';         // עיצוב מספרים ותאריכים
   let sortLocale = 'he';           // מיון תגיות
 
@@ -1196,6 +1198,7 @@
   }
 
   function setLanguage(language, locale, textDirection) {
+    localeRevision++;
     const lang = language || 'he';
     dict = (window.TRANSLATIONS && window.TRANSLATIONS[lang]) || null;
     const dir = textDirection || (lang === 'he' ? 'rtl' : 'ltr');
@@ -1206,7 +1209,7 @@
     sortLocale = lang;
     translateStatic();
     // אם הקטלוג כבר נטען — מרעננים את התצוגה כדי שהטקסט הדינמי יתורגם גם הוא
-    if (allPlugins.length) { initTags(); initCatsBar(); renderCurrentView(); }
+    if (catalogReady && !catalogLoading) { initTags(); initCatsBar(); renderCurrentView({ preserve: true }); }
   }
 
   let allPlugins = [];
@@ -1225,6 +1228,15 @@
   let searchTimer = null;
   let searchSeq = 0;                 // מונע תוצאות חיפוש ישנות מלדרוס חדשות
   let categoryCache = new Map();     // slug → תשובת ה-API של הקטגוריה
+  let detailId = null;
+  let pendingScroll = null;
+  let catalogReady = false;
+  let catalogLoading = false;
+  let reloadSeq = 0;
+  let renderSeq = 0;
+  let restoredInstance = false;
+  let preferenceChanged = false;
+  let initialSettingsReady = false;
 
   // סוויץ' "הסתר מותקנים" — הבחירה נשמרת בין הפעלות. localStorage לא תמיד
   // שורד סגירה של ה-webview, לכן שומרים גם דרך אחסון התוסף של ה-SDK
@@ -1232,6 +1244,81 @@
   const HIDE_INSTALLED_KEY = 'otzaria_store_hide_installed';
   let hideInstalled = false;
   try { hideInstalled = localStorage.getItem(HIDE_INSTALLED_KEY) === '1'; } catch {}
+
+  const content = document.getElementById('app-content');
+  const restoreState = StoreRestoreState.create(
+    () => ({
+      version: 1,
+      view: currentView.type === 'category' ? { type: 'category', slug: currentView.slug } : { type: currentView.type },
+      search: searchQuery,
+      tag: activeTag,
+      hideInstalled,
+      status: document.getElementById('status-filter').value,
+      sort: document.getElementById('sort-select').value,
+      detailId,
+      scrollTop: pendingScroll === null ? content.scrollTop : pendingScroll,
+    }),
+  );
+
+  function restoreBoot(payload) {
+    const state = restoreState.boot(payload);
+    if (!state) return;
+    restoredInstance = true;
+    currentView = state.view;
+    searchQuery = state.search;
+    activeTag = state.tag;
+    hideInstalled = state.hideInstalled;
+    detailId = state.detailId;
+    pendingScroll = state.scrollTop;
+    document.getElementById('search').value = searchQuery;
+    document.getElementById('hide-installed').checked = hideInstalled;
+    document.getElementById('status-filter').value = state.status;
+    document.getElementById('sort-select').value = state.sort;
+  }
+
+  // Resolve identifiers against the fresh, compatible catalogue, never against
+  // saved plugin objects. A temporarily unavailable category index is not proof
+  // that the category was deleted; its endpoint can still load independently.
+  function reconcileView() {
+    if (currentView.type === 'category' && storeHome) {
+      const category = (storeHome.categories || []).find(c => c.slug === currentView.slug);
+      if (category) currentView.name = category.name;
+      else {
+        currentView = { type: 'all' };
+        if (!searchQuery && !detailId) pendingScroll = 0;
+      }
+    }
+    if (currentView.type === 'home' && !hasCuratedHome()) currentView = { type: 'all' };
+    if (activeTag !== 'all' && !allPlugins.some(p => (p.tags || []).includes(activeTag))) activeTag = 'all';
+    if (detailId !== null && !allPlugins.some(p => String(p.id) === detailId)) {
+      detailId = null;
+      pendingScroll = 0;
+    }
+  }
+
+  async function finishRender(seq) {
+    // Wait for the actual rendered list/detail layout before applying scroll.
+    // Earlier category/search responses and frames may not alter a newer view.
+    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    if (seq !== renderSeq) return;
+    if (pendingScroll !== null) content.scrollTop = pendingScroll;
+    pendingScroll = null;
+    restoreState.changed();
+  }
+
+  let scrollTimer;
+  content.addEventListener('scroll', () => {
+    if (pendingScroll !== null) return;
+    clearTimeout(scrollTimer);
+    scrollTimer = setTimeout(() => restoreState.changed(), 150);
+  }, { passive: true });
+  // Explicit interaction takes precedence over a pending restored scroll.
+  for (const event of ['wheel', 'touchstart', 'pointerdown']) {
+    content.addEventListener(event, () => { pendingScroll = null; }, { passive: true });
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) restoreState.changed();
+  });
 
   // storage.get/set — אחסון KV של התוסף (עטיפת { success, data }, זמין מ-0.9.89).
   async function persistentGet(key) {
@@ -1478,21 +1565,29 @@
     updateAllBtn.onclick = async () => {
       updateAllBtn.disabled = true;
       updateAllBtn.textContent = t('מעדכן...');
-      const btns = [...list.querySelectorAll('.update-btn:not(:disabled)')];
-      const results = [];
-      for (const btn of btns) {
-        const result = await installPluginTracked(btn, btn.dataset.url, true, false);
-        results.push(result);
-        settleRow(btn.closest('.update-row'), result);   // מוריד מהרשימה מה שהצליח
-      }
-      updateAllBtn.textContent = t('הושלם ✓');
-      // כל העדכונים הצליחו — סוגרים את החלונית אחרי רגע קצר של משוב.
-      // אם משהו נכשל/לא דווח, משאירים פתוח כדי שיהיה אפשר לנסות שוב.
-      if (results.length && results.every(r => r === 'success')) {
-        setTimeout(() => hide('updates-backdrop'), 900);
-      } else if (results.some(r => r !== 'success')) {
+      try {
+        // Hold one guard across the entire batch, including gaps between rows.
+        await restoreState.guard(async () => {
+          const btns = [...list.querySelectorAll('.update-btn:not(:disabled)')];
+          const results = [];
+          for (const btn of btns) {
+            const result = await installPluginTracked(btn, btn.dataset.url, true, false);
+            results.push(result);
+            settleRow(btn.closest('.update-row'), result);   // מוריד מהרשימה מה שהצליח
+          }
+          updateAllBtn.textContent = t('הושלם ✓');
+          // כל העדכונים הצליחו — סוגרים את החלונית אחרי רגע קצר של משוב.
+          // אם משהו נכשל/לא דווח, משאירים פתוח כדי שיהיה אפשר לנסות שוב.
+          if (results.length && results.every(r => r === 'success')) {
+            setTimeout(() => hide('updates-backdrop'), 900);
+          } else if (results.some(r => r !== 'success')) {
+            updateAllBtn.disabled = false;
+            updateAllBtn.textContent = t('נסה שוב את מה שנכשל');
+          }
+        });
+      } catch {
         updateAllBtn.disabled = false;
-        updateAllBtn.textContent = t('נסה שוב את מה שנכשל');
+        updateAllBtn.textContent = t('לא ניתן להתחיל את הפעולה כרגע. נסו שוב');
       }
     };
 
@@ -1552,16 +1647,19 @@
   // ── רענון ────────────────────────────────────────────────────────
   const refreshBtn = document.getElementById('refresh-btn');
   refreshBtn.addEventListener('click', () => {
-    if (refreshBtn.classList.contains('spinning')) return;
+    if (!initialSettingsReady || refreshBtn.classList.contains('spinning')) return;
     reload();
   });
 
   async function reload() {
+    const seq = ++reloadSeq;
+    renderSeq++;
+    searchSeq++;
+    catalogLoading = true;
+    if (pendingScroll === null) pendingScroll = content.scrollTop;
     refreshBtn.classList.add('spinning');
-    hide('grid'); hide('empty'); hide('error'); hide('home'); hide('view-title');
+    hide('grid'); hide('empty'); hide('error'); hide('home'); hide('view-title'); hide('detail-page');
     show('loading');
-    allPlugins = [];
-    installedPlugins = [];
     try {
       const [catalogRes, installedRes, homeRes] = await Promise.all([
         apiFetch(withAppVersion(API)),
@@ -1569,6 +1667,7 @@
         // דף הבית האצור — כשל בו אינו מפיל את החנות (נופלים ל"כל התוספים")
         apiFetch(withAppVersion(BASE + '/api/plugins/store-home')).catch(() => null),
       ]);
+      if (seq !== reloadSeq) return;
       if (catalogRes.status !== 200) throw new Error(`HTTP ${catalogRes.status}`);
       const rawCatalog = JSON.parse(catalogRes.body);
       // לכל תוסף בוחרים את הגרסה הגבוהה ביותר התואמת לגרסת אוצריא של המשתמש
@@ -1583,20 +1682,25 @@
         try { storeHome = JSON.parse(homeRes.body); } catch { /* נופלים ל"כל התוספים" */ }
       }
       categoryCache = new Map();
-      // אצירה ריקה או כשל בטעינתה → ברירת המחדל היא הרשימה המלאה
-      if (currentView.type === 'home' && !hasCuratedHome()) currentView = { type: 'all' };
+      catalogReady = true;
+      catalogLoading = false;
+      reconcileView();
       initTags();
       initCatsBar();
-      renderCurrentView();
+      await renderCurrentView({ preserve: true });
+      if (seq !== reloadSeq) return;
+      restoreState.activate();
       hide('new-toast');
       checkNewPlugins();
       const updates = getAvailableUpdates();
       if (updates.length > 0) showUpdatesModal(updates);
     } catch (e) {
+      if (seq !== reloadSeq) return;
+      catalogLoading = false;
+      hide('loading');
       showLoadError(e);
     }
-    hide('loading');
-    refreshBtn.classList.remove('spinning');
+    if (seq === reloadSeq) refreshBtn.classList.remove('spinning');
   }
 
   // ── ערכת צבעים: כל תפקידי הצבע מגיעים מ-theme האמיתי של אוצריא ─────────
@@ -1670,6 +1774,7 @@
   // ה-theme והשפה מגיעים כבר ב-plugin.boot (ללא הרשאה); נתפוס אותם מוקדם ככל האפשר.
   try {
     Otzaria.on('plugin.boot', p => {
+      restoreBoot(p);
       if (p && p.theme) applyTheme(p.theme);
       if (p && p.app) setLanguage(p.app.language, p.app.locale, p.app.textDirection);
       if (p && p.app && p.app.platform) appPlatform = p.app.platform;
@@ -1685,7 +1790,9 @@
 
   // ── טעינה ראשונית ────────────────────────────────────────────────
   async function loadPlugins() {
-    await new Promise(resolve => window.addEventListener('plugin.ready', resolve, { once: true }));
+    if (!Otzaria._booted) {
+      await new Promise(resolve => window.addEventListener('plugin.ready', resolve, { once: true }));
+    }
     // קריאה מפורשת כדי לוודא את המצב הנוכחי גם אם plugin.boot כבר חלף
     try {
       const res = await Otzaria.call('app.getTheme', {});
@@ -1693,8 +1800,9 @@
     } catch {}
     // כנ"ל לשפה — מוודא את שפת הממשק הנוכחית גם אם plugin.boot כבר חלף
     try {
+      const revision = localeRevision;
       const loc = await Otzaria.call('app.getLocale', {});
-      if (loc && loc.success) setLanguage(loc.data.language, loc.data.locale, loc.data.textDirection);
+      if (loc && loc.success && revision === localeRevision) setLanguage(loc.data.language, loc.data.locale, loc.data.textDirection);
     } catch {}
     // גרסת אוצריא קבועה לאורך הריצה — מספיק למשוך פעם אחת לפני הטעינה
     try {
@@ -1707,11 +1815,12 @@
     // שחזור "הסתר מותקנים" מאחסון התוסף (storage.get שורד בין פתיחות,
     // בניגוד ל-localStorage שמתאפס עם ה-webview) — לפני הרינדור הראשון.
     const saved = await persistentGet(HIDE_INSTALLED_KEY);
-    if (saved !== null && saved !== undefined) {
+    if (!restoredInstance && !preferenceChanged && saved !== null && saved !== undefined) {
       hideInstalled = saved === true || saved === '1';
       hideInstalledEl.checked = hideInstalled;
       try { localStorage.setItem(HIDE_INSTALLED_KEY, hideInstalled ? '1' : '0'); } catch {}
     }
+    initialSettingsReady = true;
     await reload();
   }
 
@@ -1819,8 +1928,22 @@
   }
 
   // ── ניתוב תצוגה ──
-  function renderCurrentView() {
+  async function renderCurrentView(options = {}) {
+    const seq = ++renderSeq;
+    searchSeq++;
+    if (!options.preserve) {
+      detailId = null;
+      pendingScroll = 0;
+    } else if (pendingScroll === null) pendingScroll = content.scrollTop;
+    restoreState.changed();
+    if (!catalogReady || catalogLoading) return;
+    if (detailId !== null) {
+      const plugin = allPlugins.find(p => String(p.id) === detailId);
+      if (plugin) return showDetail(plugin, { preserve: true });
+      detailId = null;
+    }
     hide('detail-page');
+    hide('loading'); hide('error');
     show('filters');
     document.getElementById('plugin-count').textContent = t('{n} תוספים', { n: allPlugins.length });
     if (storeHome && (storeHome.categories || []).length) show('cats-bar'); else hide('cats-bar');
@@ -1828,8 +1951,8 @@
 
     if (searchQuery) {
       hide('home'); hide('tags-wrap');
-      renderSearch();
-      return;
+      await renderSearch(seq);
+      return finishRender(seq);
     }
     hide('view-title');
     if (currentView.type === 'home') {
@@ -1838,13 +1961,14 @@
       renderHome();
     } else if (currentView.type === 'category') {
       hide('tags-wrap'); hide('home');
-      renderCategory();
+      await renderCategory(seq);
     } else {
       hide('home');
       document.getElementById('tags-wrap').classList.remove('hidden');
       updateTagsToggle();
       render();
     }
+    await finishRender(seq);
   }
 
   function setViewTitle(title, sub) {
@@ -1926,16 +2050,19 @@
   }
 
   // ── דף קטגוריה ──
-  async function renderCategory() {
+  async function renderCategory(seq) {
     const { slug, name } = currentView;
+    const cache = categoryCache;
     setViewTitle(name || t('קטגוריה'), '');
-    if (!categoryCache.has(slug)) {
+    if (!cache.has(slug)) {
       show('loading'); hide('grid'); hide('empty');
       try {
         const res = await apiFetch(withAppVersion(`${API}/categories/${encodeURIComponent(slug)}`));
         if (res.status !== 200) throw new Error(`HTTP ${res.status}`);
-        categoryCache.set(slug, JSON.parse(res.body));
+        if (seq !== renderSeq) return;
+        cache.set(slug, JSON.parse(res.body));
       } catch (e) {
+        if (seq !== renderSeq) return;
         hide('loading');
         setViewTitle(name || t('קטגוריה'), isOfflineError(e)
           ? t('אין חיבור לאינטרנט — הקטגוריה תיטען כשהמחשב יתחבר')
@@ -1943,17 +2070,17 @@
         fillGrid([]);
         return;
       }
-      hide('loading');
       // בזמן הטעינה המשתמש אולי עבר לתצוגה אחרת
-      if (searchQuery || currentView.type !== 'category' || currentView.slug !== slug) return;
+      if (seq !== renderSeq) return;
+      hide('loading');
     }
-    const cat = categoryCache.get(slug);
+    const cat = cache.get(slug);
     setViewTitle(cat.name, cat.description || '');
     fillGrid(toCatalogList(cat.plugins));
   }
 
   // ── חיפוש חכם מהשרת (עם fallback לסינון מקומי) ──
-  async function renderSearch() {
+  async function renderSearch(renderId) {
     const q = searchQuery;
     const seq = ++searchSeq;
     hide('view-title'); hide('grid'); hide('empty');
@@ -1973,7 +2100,7 @@
     } catch { /* fallback לסינון מקומי */ }
 
     // תשובה ישנה או שהקלט השתנה בינתיים — נזרקת
-    if (seq !== searchSeq || q !== searchQuery) return;
+    if (renderId !== renderSeq || seq !== searchSeq || q !== searchQuery) return;
     hide('loading');
 
     if (list === null) {
@@ -2064,7 +2191,7 @@
       activeTag = value;
       document.querySelectorAll('.tag-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      render();
+      renderCurrentView();
     };
     return btn;
   }
@@ -2142,7 +2269,12 @@
   // דף התוסף (כמו עמוד התוסף באתר): ראש העמוד — אייקון, שם, תג סטטוס, תיאור קצר
   // ופעולה; רצועת נתוני המפתח; ומתחת אזורים עם כותרת: צילומי מסך, תיאור מלא (רק
   // כשהוא שונה מהקצר), מידע כללי ותגיות, ודירוג המשתמשים.
-  function showDetail(p) {
+  function showDetail(p, options = {}) {
+    const seq = ++renderSeq;
+    searchSeq++;
+    clearTimeout(searchTimer);
+    detailId = String(p.id);
+    if (!options.preserve) pendingScroll = 0;
     showDetailPage();
 
     const downloadUrl = p.downloadUrl.startsWith('http') ? p.downloadUrl : BASE + p.downloadUrl;
@@ -2243,6 +2375,8 @@
         show('lightbox');
       });
     });
+    restoreState.changed();
+    return finishRender(seq);
   }
 
   // כפתור התקנה לפי מצב: מותקן ועדכני → כפתור פתיחה (בגוון המשני); מותקן עם
@@ -2579,36 +2713,59 @@
 
     btn.disabled = true;
     btn.innerHTML = `<span class="btn-spinner"></span>${esc(words.progress)}`;
-    const token = await createInstallToken(downloadUrl);
     try {
-      await Otzaria.call('plugin.requestInstall', {
-        url: downloadUrl,
-        ...(token ? { token, callback: `${BASE}/api/plugins/install-result` } : {}),
+      return await restoreState.guard(async () => {
+        const token = await createInstallToken(downloadUrl);
+        let request;
+        try {
+          request = await Otzaria.call('plugin.requestInstall', {
+            url: downloadUrl,
+            ...(token ? { token, callback: `${BASE}/api/plugins/install-result` } : {}),
+          });
+        } catch {
+          // A transport failure cannot prove the dispatched installation stopped.
+          restoreState.keepAliveForUnreportedOperation();
+        }
+        if (!request || request.success !== true || request.data !== true) {
+          if (!request || (request.success !== false && request.data !== false)) {
+            restoreState.keepAliveForUnreportedOperation();
+          }
+          btn.disabled = false;
+          btn.textContent = t('שגיאה');
+          return 'failure';
+        }
+        // ללא טוקן אין מעקב — לא מסמנים כמותקן כדי לא להצהיר על תוצאה שאינה ידועה
+        if (!token) {
+          restoreState.keepAliveForUnreportedOperation();
+          btn.textContent = t('נשלח ✓');
+          return 'no_report';
+        }
+
+        const result = await waitForInstallResult(token);
+        if (result === 'success') {
+          btn.textContent = words.success;
+          // רענון מאוצריא כדי לקבל את ה-pluginId של מה שזה עתה הותקן; markInstalled
+          // אחריו, כדי שהגרסה החדשה תירשם גם אם אוצריא עדיין לא הספיקה לרשום אותה.
+          await refreshInstalledFromApp();
+          markInstalled(plugin);
+          const pluginId = offerOpen ? installedIdOf(plugin) : null;
+          if (pluginId) makeOpenButton(btn, pluginId, words.successOpen);
+        } else if (result === 'failure') {
+          btn.disabled = false;
+          btn.textContent = words.failure;
+        } else {
+          restoreState.keepAliveForUnreportedOperation();
+          btn.textContent = t('נשלח ✓');
+        }
+        return result;
       });
-    } catch (err) {
+    } catch {
+      // In particular, never start an installation when clearing a previously
+      // accepted snapshot failed: the host might otherwise discard this page.
       btn.disabled = false;
-      btn.textContent = t('שגיאה');
+      btn.textContent = t('לא ניתן להתחיל את הפעולה כרגע. נסו שוב');
       return 'failure';
     }
-    // ללא טוקן אין מעקב — לא מסמנים כמותקן כדי לא להצהיר על תוצאה שאינה ידועה
-    if (!token) { btn.textContent = t('נשלח ✓'); return 'no_report'; }
-
-    const result = await waitForInstallResult(token);
-    if (result === 'success') {
-      btn.textContent = words.success;
-      // רענון מאוצריא כדי לקבל את ה-pluginId של מה שזה עתה הותקן; markInstalled
-      // אחריו, כדי שהגרסה החדשה תירשם גם אם אוצריא עדיין לא הספיקה לרשום אותה.
-      await refreshInstalledFromApp();
-      markInstalled(plugin);
-      const pluginId = offerOpen ? installedIdOf(plugin) : null;
-      if (pluginId) makeOpenButton(btn, pluginId, words.successOpen);
-    } else if (result === 'failure') {
-      btn.disabled = false;
-      btn.textContent = words.failure;
-    } else {
-      btn.textContent = t('נשלח ✓');
-    }
-    return result;
   }
 
   // הופך כפתור התקנה/עדכון שסיים בהצלחה לכפתור פתיחה — הודעת ההצלחה עצמה
@@ -2654,6 +2811,11 @@
   // חיפוש: debounce קצר ואז חיפוש חכם בשרת; ריקון מחזיר לתצוגה הנוכחית
   document.getElementById('search').addEventListener('input', (e) => {
     searchQuery = e.target.value.trim();
+    searchSeq++;
+    renderSeq++;
+    detailId = null;
+    pendingScroll = 0;
+    restoreState.changed();
     clearTimeout(searchTimer);
     if (!searchQuery) {
       searchSeq++;
@@ -2675,6 +2837,7 @@
   const hideInstalledEl = document.getElementById('hide-installed');
   hideInstalledEl.checked = hideInstalled;
   hideInstalledEl.addEventListener('change', () => {
+    preferenceChanged = true;
     hideInstalled = hideInstalledEl.checked;
     try { localStorage.setItem(HIDE_INSTALLED_KEY, hideInstalled ? '1' : '0'); } catch {}
     persistentSet(HIDE_INSTALLED_KEY, hideInstalled);

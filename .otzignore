@@ -1,0 +1,4 @@
+# Test infrastructure is not part of the installed plugin.
+tests/
+package.json
+package-lock.json
