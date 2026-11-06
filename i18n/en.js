@@ -4,6 +4,7 @@
 // {n} / {q} / {v} / {msg} / {total} הם מצייני מקום שממולאים ב-t().
 window.TRANSLATIONS = window.TRANSLATIONS || {};
 window.TRANSLATIONS.en = {
+  'לא ניתן להתחיל את הפעולה כרגע. נסו שוב': 'Cannot start the operation right now. Please try again.',
   // ── סרגל הכותרת והפילטרים ──
   'חנות תוספים': 'Plugin Store',
   'רענן רשימה': 'Refresh list',
