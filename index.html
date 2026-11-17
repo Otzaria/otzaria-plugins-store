@@ -1242,6 +1242,7 @@
   // שורד סגירה של ה-webview, לכן שומרים גם דרך אחסון התוסף של ה-SDK
   // (הרשאות plugin.storage.read/write); localStorage נשאר כגיבוי מקומי מהיר.
   const HIDE_INSTALLED_KEY = 'otzaria_store_hide_installed';
+  const SORT_KEY = 'otzaria_store_sort';
   let hideInstalled = false;
   try { hideInstalled = localStorage.getItem(HIDE_INSTALLED_KEY) === '1'; } catch {}
 
@@ -1819,6 +1820,16 @@
       hideInstalled = saved === true || saved === '1';
       hideInstalledEl.checked = hideInstalled;
       try { localStorage.setItem(HIDE_INSTALLED_KEY, hideInstalled ? '1' : '0'); } catch {}
+    }
+    // שחזור המיון שנבחר (למשל "החדשים ביותר") — מיון שאינו "מומלצים" פותח את "כל התוספים".
+    // לא חל על מופע משוחזר (הוא מביא את המיון שלו) או אחרי שינוי ידני לפני סיום הטעינה.
+    if (!restoredInstance && !preferenceChanged) {
+      let savedSort = await persistentGet(SORT_KEY);
+      if (savedSort == null) { try { savedSort = localStorage.getItem(SORT_KEY); } catch {} }
+      if (!preferenceChanged && savedSort && savedSort !== 'recommended' && SORT_DATE_FIELD[savedSort]) {
+        document.getElementById('sort-select').value = savedSort;
+        currentView = { type: 'all' };
+      }
     }
     initialSettingsReady = true;
     await reload();
@@ -2827,6 +2838,9 @@
   document.getElementById('status-filter').addEventListener('change', renderCurrentView);
   // בדף הבית אין רשימה למיין — מיון בפועל עובר ל"כל התוספים"
   document.getElementById('sort-select').addEventListener('change', (e) => {
+    preferenceChanged = true;
+    try { localStorage.setItem(SORT_KEY, e.target.value); } catch {}
+    persistentSet(SORT_KEY, e.target.value);
     if (!searchQuery && currentView.type === 'home' && e.target.value !== 'recommended') {
       currentView = { type: 'all' };
     }
