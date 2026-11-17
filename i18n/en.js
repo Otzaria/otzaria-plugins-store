@@ -17,6 +17,9 @@ window.TRANSLATIONS.en = {
   'הסתרת תוספים שכבר מותקנים אצלך (למעט כאלה עם עדכון זמין)':
     'Hide plugins you already have installed (except those with an available update)',
   'הסתר מותקנים': 'Hide installed',
+  'עדכן אותי בפתיחה': 'Notify me on startup',
+  'הודעה בעליית אוצריא על עדכונים לתוספים ועל תוספים חדשים בחנות. כשמכובה — לא תוצג הודעה והתוסף לא ייטען בעלייה':
+    'A notice when Otzaria starts about plugin updates and new plugins in the store. When off, no notice is shown and the plugin is not loaded at startup',
   'מיון': 'Sort',
   'מומלצים': 'Recommended',
   'החדשים ביותר': 'Newest',

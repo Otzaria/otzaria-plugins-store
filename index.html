@@ -291,7 +291,7 @@
 
     /* ── סוויץ' "הסתר מותקנים" — Switch של M3 כמו SwitchSettingsTile באוצריא ──
        ה-input מוסתר חזותית בלבד (לא display:none), כדי שיישאר נגיש במקלדת. */
-    #hide-installed-wrap {
+    .switch-wrap {
       position: relative;
       display: inline-flex;
       align-items: center;
@@ -303,14 +303,14 @@
       cursor: pointer;
       white-space: nowrap;
     }
-    #hide-installed-wrap input {
+    .switch-wrap input {
       position: absolute;
       width: 1px; height: 1px;
       opacity: 0;
       pointer-events: none;
     }
     /* מסילת המתג — החריג היחיד לרדיוס 8: גלולה, כמו ה-Switch של אוצריא (COOKBOOK § Switch) */
-    #hide-installed-wrap .switch {
+    .switch-wrap .switch {
       width: 40px; height: 24px;
       border-radius: var(--radius-pill);
       border: 2px solid var(--color-outline);
@@ -320,7 +320,7 @@
       transition: background-color var(--motion), border-color var(--motion);
     }
     /* מיקום לוגי (inset-inline) — הידית נעה נכון גם ב-rtl וגם ב-ltr */
-    #hide-installed-wrap .switch::after {
+    .switch-wrap .switch::after {
       content: '';
       position: absolute;
       top: 50%;
@@ -332,14 +332,14 @@
       transition: inset-inline-start var(--motion), width var(--motion), height var(--motion),
         margin var(--motion), background-color var(--motion);
     }
-    #hide-installed-wrap input:checked + .switch { background: var(--color-primary); border-color: var(--color-primary); }
-    #hide-installed-wrap input:checked + .switch::after {
+    .switch-wrap input:checked + .switch { background: var(--color-primary); border-color: var(--color-primary); }
+    .switch-wrap input:checked + .switch::after {
       inset-inline-start: 18px;
       width: 16px; height: 16px;
       margin-top: -8px;
       background: var(--color-on-primary);
     }
-    #hide-installed-wrap input:focus-visible + .switch { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+    .switch-wrap input:focus-visible + .switch { outline: 2px solid var(--color-primary); outline-offset: 2px; }
 
     /* ── שבבים (כמו ui/Chip באתר): קטגוריות, תגיות ──
        רגיל — משטח surface ומסגרת outline-variant; נבחר — המשטח הטונלי ומסגרת primary
@@ -1054,8 +1054,8 @@
     /* בלי תנועה למי שביקש זאת — השלד סטטי, החלונות נפתחים בלי אנימציה */
     @media (prefers-reduced-motion: reduce) {
       .skeleton, #updates-backdrop, #updates-modal, #lightbox, #new-toast { animation: none; }
-      .card, .chip, .btn, .icon-btn, .field, .card-title, #hide-installed-wrap .switch,
-      #hide-installed-wrap .switch::after { transition: none; }
+      .card, .chip, .btn, .icon-btn, .field, .card-title, .switch-wrap .switch,
+      .switch-wrap .switch::after { transition: none; }
     }
   </style>
 </head>
@@ -1092,10 +1092,15 @@
     </select>
     <svg class="field-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.59 8.59 12 13.17 7.41 8.59 6 10l6 6 6-6z"/></svg>
   </span>
-  <label id="hide-installed-wrap" data-t-title="הסתרת תוספים שכבר מותקנים אצלך (למעט כאלה עם עדכון זמין)" title="הסתרת תוספים שכבר מותקנים אצלך (למעט כאלה עם עדכון זמין)">
+  <label id="hide-installed-wrap" class="switch-wrap" data-t-title="הסתרת תוספים שכבר מותקנים אצלך (למעט כאלה עם עדכון זמין)" title="הסתרת תוספים שכבר מותקנים אצלך (למעט כאלה עם עדכון זמין)">
     <input type="checkbox" id="hide-installed">
     <span class="switch" aria-hidden="true"></span>
     <span data-t="הסתר מותקנים">הסתר מותקנים</span>
+  </label>
+  <label id="notify-startup-wrap" class="switch-wrap" data-t-title="הודעה בעליית אוצריא על עדכונים לתוספים ועל תוספים חדשים בחנות. כשמכובה — לא תוצג הודעה והתוסף לא ייטען בעלייה" title="הודעה בעליית אוצריא על עדכונים לתוספים ועל תוספים חדשים בחנות. כשמכובה — לא תוצג הודעה והתוסף לא ייטען בעלייה">
+    <input type="checkbox" id="notify-startup" checked>
+    <span class="switch" aria-hidden="true"></span>
+    <span data-t="עדכן אותי בפתיחה">עדכן אותי בפתיחה</span>
   </label>
 </div>
 
@@ -1243,6 +1248,7 @@
   // (הרשאות plugin.storage.read/write); localStorage נשאר כגיבוי מקומי מהיר.
   const HIDE_INSTALLED_KEY = 'otzaria_store_hide_installed';
   const SORT_KEY = 'otzaria_store_sort';
+  const NOTIFY_STARTUP_KEY = 'otzaria_store_notify_startup';
   let hideInstalled = false;
   try { hideInstalled = localStorage.getItem(HIDE_INSTALLED_KEY) === '1'; } catch {}
 
@@ -2857,6 +2863,17 @@
     persistentSet(HIDE_INSTALLED_KEY, hideInstalled);
     if (currentView.type === 'home' && !hasCuratedHome()) currentView = { type: 'all' };
     renderCurrentView();
+  });
+
+  // סוויץ' "עדכן אותי בפתיחה" — נשמר באחסון התוסף (מפתח ה-KV שהמניפסט קורא ב-when של
+  // activationEvents): כשהערך false אוצריא לא מרימה את מופע הרקע בעלייה בכלל.
+  // ברירת מחדל — מופעל (מפתח חסר = מופעל).
+  const notifyStartupEl = document.getElementById('notify-startup');
+  persistentGet(NOTIFY_STARTUP_KEY).then(v => {
+    if (v === false || v === 'false' || v === '0') notifyStartupEl.checked = false;
+  });
+  notifyStartupEl.addEventListener('change', () => {
+    persistentSet(NOTIFY_STARTUP_KEY, notifyStartupEl.checked);
   });
 
   loadPlugins();

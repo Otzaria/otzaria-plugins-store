@@ -187,6 +187,11 @@
       const hasStartupPerm = payload && Array.isArray(payload.permissions)
         && payload.permissions.includes('app.run_on_startup');
       if (!isBackground || !hasStartupPerm) return;
+      // גיבוי לתנאי ה-when שבמניפסט: המשתמש כיבה את "עדכן אותי בפתיחה" — בלי הודעה.
+      try {
+        const pref = await Otzaria.call('storage.get', { key: 'otzaria_store_notify_startup' });
+        if (pref && pref.success && (pref.data === false || pref.data === 'false')) return;
+      } catch {}
       // שפת הממשק לניסוח ההודעה (0.9.97+; בגרסאות ישנות אין language ונשארים בעברית)
       const lang = payload.app.language || 'he';
       dict = (window.TRANSLATIONS && window.TRANSLATIONS[lang]) || null;

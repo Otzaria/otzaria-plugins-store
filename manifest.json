@@ -13,6 +13,8 @@
   "permissions": [
     "network.access",
     "plugin.open_other",
+    "plugin.storage.read",
+    "plugin.storage.write",
     "app.run_on_startup",
     "app.startup_contributions",
     "events.subscribe:settings.changed"
@@ -34,7 +36,12 @@
       "entrypoint": "background.html"
     },
     "startup": {
-      "activationEvents": ["app.startup"]
+      "activationEvents": [
+        {
+          "topic": "app.startup",
+          "when": { "storage": { "key": "otzaria_store_notify_startup", "notEquals": false } }
+        }
+      ]
     },
     "publishedDataTypes": [],
     "databaseSources": []
