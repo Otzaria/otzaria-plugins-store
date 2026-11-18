@@ -10,6 +10,9 @@ const sourceRoot = process.env.STORE_SOURCE_ROOT || path.resolve(__dirname, '..'
 const ok = data => ({ success: true, data });
 const copy = value => JSON.parse(JSON.stringify(value));
 const response = (data, status = 200) => ({ status, ok: status === 200, body: JSON.stringify(data), headers: {} });
+const fail = (code, message) => ({ success: false, error: { code, message } });
+const MIRROR_KEY = 'otzaria_store_offline_mirror';
+const PIXEL = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
 
 function catalog() {
   return Array.from({ length: 36 }, (_, index) => ({
@@ -56,7 +59,7 @@ async function eventually(assertion, timeout = 5000) {
 
 async function startBrowser() {
   const server = http.createServer(async (req, res) => {
-    const file = { '/': 'index.html', '/restore-state.js': 'restore-state.js', '/i18n/en.js': 'i18n/en.js' }[req.url];
+    const file = { '/': 'index.html', '/restore-state.js': 'restore-state.js', '/offline-mirror.js': 'offline-mirror.js', '/i18n/en.js': 'i18n/en.js' }[req.url];
     if (!file) { res.writeHead(404).end(); return; }
     try {
       const body = await fs.readFile(path.join(sourceRoot, file));
@@ -88,6 +91,11 @@ async function openStore(runtime, options = {}) {
     noToken: false,
     requestResult: ok(true),
     results: new Map(),
+    storage: {},
+    offline: false,
+    folderToken: 'dir-fixture',
+    mirrorFiles: {},
+    pickResult: { cancelled: true },
     calls: [],
     writes: [],
     unsafeActions: [],
@@ -120,12 +128,27 @@ async function openStore(runtime, options = {}) {
       case 'app.getTheme': return ok({});
       case 'app.getLocale': return ok({ language: 'he', locale: 'he-IL', textDirection: 'rtl' });
       case 'app.getInfo': return ok({ version: '0.9.98.1', platform: 'linux' });
-      case 'storage.get': return ok(host.preference);
-      case 'storage.set': host.preference = args.value; return ok(true);
+      case 'storage.get': return ok(args.key in host.storage ? host.storage[args.key] : host.preference);
+      case 'storage.set':
+        if (args.key === MIRROR_KEY) host.storage[args.key] = args.value;
+        else host.preference = args.value;
+        return ok(true);
+      case 'fs.pickUserFolder': return ok(host.pickResult);
+      case 'fs.revokeFolder': return ok(true);
+      case 'fs.openFolderFile': {
+        if (args.folderToken !== host.folderToken) return fail('error.not_found', 'unknown folder token');
+        if (!(args.path in host.mirrorFiles)) return fail('error.not_found', 'file not found');
+        return ok({ cancelled: false, token: 'file:' + args.path, url: PIXEL, name: args.path.split('/').pop(), size: 1, access: 'read' });
+      }
+      case 'fs.readTextFile': return ok(host.mirrorFiles[args.token.slice('file:'.length)]);
       case 'plugin.listInstalled': return ok(host.installed);
       case 'plugin.openOther': return ok(true);
       case 'plugin.requestInstall':
         if (host.requestThrows) throw new Error('Fixture transport lost');
+        if (args.folderToken !== undefined) {
+          if (args.folderToken !== host.folderToken) return fail('error.not_found', 'unknown folder token');
+          if (!(args.path in host.mirrorFiles)) return fail('error.not_found', 'file not found');
+        }
         return host.requestResult;
       case 'plugin.setRestoreState': {
         const entry = { state: copy(args.state), accepted: false };
@@ -145,6 +168,8 @@ async function openStore(runtime, options = {}) {
         return ok(true);
       }
       case 'network.fetchStream': {
+        if (host.offline) throw new Error('SocketException: Failed host lookup');
+        if (host.blocked) return { status: 418, ok: false, body: '<html>blocked</html>', headers: {} };
         const url = new URL(args.url);
         const category = slug => ({
           slug, name: slug === 'reading' ? 'קריאה' : 'כלים', showOnHome: true,
@@ -233,4 +258,4 @@ async function openStore(runtime, options = {}) {
   };
 }
 
-module.exports = { startBrowser, openStore, state, eventually, response, ok };
+module.exports = { startBrowser, openStore, state, eventually, response, ok, fail, MIRROR_KEY, PIXEL };

@@ -627,7 +627,26 @@
     /* שגיאה אמיתית — אריח בגוון השגיאה; אין חיבור לאינטרנט — הודעה רגועה (לא אדומה)
        שגם משתמש לא-טכני יבין */
     #error:not(.offline) .state-icon { background: var(--color-error-container); color: var(--color-on-error-container); }
-    #error .error-retry { margin-top: 22px; }
+    #error .error-actions { margin-top: 22px; display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+
+    /* מצב אופליין: מקור הקטלוג הוא תיקיית "עדכוני אוצריא" */
+    .mirror-banner {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px 12px;
+      margin: 12px 20px 0;
+      padding: 10px 16px;
+      border-radius: var(--radius-8);
+      background: var(--color-secondary-container);
+      color: var(--color-on-secondary-container);
+      font-size: var(--fs-13);
+      line-height: 1.6;
+    }
+    .mirror-banner.hidden { display: none; }
+    .mirror-banner svg { width: 20px; height: 20px; flex: none; }
+    .mirror-banner-text { flex: 1 1 260px; }
+    .mirror-banner .btn { color: inherit; }
 
     /* ── קישוט כותרת (כמו TitleOrnament באתר): קו דק שדוהה בקצוות ונקודת זהב במרכזו.
        הרוחב יחסי לעטיפה שמעליו (heading-wrap — ברוחב הכותרת). ── */
@@ -1070,6 +1089,8 @@
 
 <main class="app-content" id="app-content">
 
+<div id="mirror-banner" class="mirror-banner hidden" role="status"></div>
+
 <div id="filters">
   <div class="search-field">
     <svg class="field-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
@@ -1166,6 +1187,7 @@
 </div>
 
 <script src="restore-state.js"></script>
+<script src="offline-mirror.js"></script>
 <script>
   const BASE = 'https://otzaria.org';
   const API = BASE + '/api/plugins';
@@ -1174,6 +1196,169 @@
   // תמונת ברירת מחדל לתוסף בלי תמונה. logo.webp — הלוגו שהאתר עצמו מגיש
   // (logo.svg אינו קיים בשרת ומחזיר 404).
   const DEFAULT_IMG = BASE + '/logo.webp';
+
+  // כתובת מלאה לנכס מהקטלוג: יחסית לאתר, או mirror:<נתיב> במצב אופליין.
+  const absUrl = u => (u.startsWith('http') || StoreOfflineMirror.isMirrorUrl(u) ? u : BASE + u);
+
+  // ── מצב אופליין: מראת "עדכוני אוצריא" ────────────────────────────
+  // התיקייה שהמשתמש אישר (fs.pickUserFolder) נשמרת כ-{ folderToken, name }.
+  // כשאין אינטרנט החנות נטענת ממנה; mirror מחזיק את המקור הפעיל, או null.
+  const MIRROR_KEY = 'otzaria_store_offline_mirror';
+  let mirror = null;
+
+  // קריאת SDK שמחזירה את data, וזורקת Error עם קוד השגיאה של אוצריא.
+  async function sdk(method, args) {
+    const res = await Otzaria.call(method, args);
+    if (!res || res.success !== true) {
+      const err = res && res.error;
+      throw new Error([err && err.code, err && err.message].filter(Boolean).join(': ') || 'error');
+    }
+    return res.data;
+  }
+
+  const isMirrorFolderGone = e => /unknown folder token|folder no longer exists|granted folder path changed/.test(e.message);
+
+  async function savedMirror() {
+    const value = await persistentGet(MIRROR_KEY);
+    return value && typeof value === 'object' && typeof value.folderToken === 'string' ? value : null;
+  }
+
+  // מוצא בתיקייה המאושרת catalog.json של מראה ומחזיר { base, catalog }. קובץ
+  // באותו שם שאינו מראה אינו מסתיר מראה שיושבת עמוק יותר.
+  async function readMirrorCatalog(folderToken) {
+    let lastError = null;
+    for (const dir of StoreOfflineMirror.CATALOG_DIRS) {
+      try {
+        const file = await sdk('fs.openFolderFile', { folderToken, path: StoreOfflineMirror.join(dir, 'catalog.json') });
+        // ה-token אינו משוחרר כאן: לאותו קובץ יש token אחד, וקריאה מקבילה הייתה נשברת.
+        const text = await sdk('fs.readTextFile', { token: file.token });
+        return { base: dir, catalog: StoreOfflineMirror.parseCatalog(text) };
+      } catch (e) {
+        lastError = e;
+        // תיקייה שבוטלה, כונן שנותק או הרשאה חסרה — אין טעם לנסות מיקומים נוספים.
+        if (isMirrorFolderGone(e) || /permission|unknown_method/.test(e.message)) break;
+      }
+    }
+    throw lastError || new Error('error.not_found');
+  }
+
+  async function loadMirrorSource(saved) {
+    const { base, catalog } = await readMirrorCatalog(saved.folderToken);
+    const plugins = StoreOfflineMirror.toStorePlugins(catalog, base);
+    return {
+      plugins,
+      home: StoreOfflineMirror.toStoreHome(catalog, plugins),
+      mirror: { folderToken: saved.folderToken, name: saved.name || '', lastSync: catalog.lastSync || null },
+    };
+  }
+
+  // בחירת התיקייה: אוצריא מציגה דיאלוג תיקייה ודיאלוג הסכמה משלה. נשמרת רק
+  // תיקייה שבאמת נמצא בה קטלוג, והתיקייה הקודמת משוחררת.
+  async function pickMirrorFolder(btn) {
+    let picked;
+    try {
+      picked = await sdk('fs.pickUserFolder', { title: t('בחירת תיקיית העדכונים האופליין') });
+    } catch (e) {
+      if (btn) btn.textContent = /unknown_method/.test(e.message)
+        ? t('גרסת אוצריא שלך אינה תומכת בכך. עדכנו את אוצריא.')
+        : t('לא ניתן לבחור תיקייה. בדקו את הרשאות התוסף.');
+      return;
+    }
+    if (!picked || picked.cancelled) return;
+    const next = { folderToken: picked.folderToken, name: picked.name || '' };
+    try {
+      await loadMirrorSource(next);
+    } catch (e) {
+      if (btn) btn.textContent = mirrorErrorText({ mirrorError: e, mirrorName: next.name });
+      return;
+    }
+    const previous = await savedMirror();
+    await persistentSet(MIRROR_KEY, next);
+    if (previous && previous.folderToken !== next.folderToken) revokeMirrorFolder(previous);
+    reload();
+  }
+
+  async function forgetMirror() {
+    const previous = await savedMirror();
+    await persistentSet(MIRROR_KEY, null);
+    if (previous) revokeMirrorFolder(previous);
+    reload();
+  }
+
+  function revokeMirrorFolder(saved) {
+    releaseMirrorFiles(saved.folderToken);
+    Promise.resolve().then(() => Otzaria.call('fs.revokeFolder', { folderToken: saved.folderToken })).catch(() => {});
+  }
+
+  function renderMirrorBanner() {
+    const el = document.getElementById('mirror-banner');
+    if (!mirror) { el.classList.add('hidden'); el.innerHTML = ''; return; }
+    const name = mirror.name ? `„${mirror.name}”` : '';
+    const text = mirror.lastSync
+      ? t('אתר החנות אינו זמין. מוצגים התוספים מתיקיית העדכונים {name}, שהורדו ב-{date}.', { name, date: formatDate(mirror.lastSync) })
+      : t('אתר החנות אינו זמין. מוצגים התוספים מתיקיית העדכונים {name}.', { name });
+    el.innerHTML = `${OFFLINE_ICON}<span class="mirror-banner-text">${esc(text)}</span>`
+      + `<button class="btn btn-text mirror-change" type="button">${esc(t('החלפת תיקייה'))}</button>`
+      + `<button class="btn btn-text mirror-forget" type="button">${esc(t('ניתוק התיקייה'))}</button>`;
+    el.querySelector('.mirror-change').onclick = e => pickMirrorFolder(e.currentTarget);
+    el.querySelector('.mirror-forget').onclick = () => forgetMirror();
+    el.classList.remove('hidden');
+  }
+
+  function revokeFileToken(token) {
+    Promise.resolve().then(() => Otzaria.call('fs.revokeFile', { token })).catch(() => {});
+  }
+
+  // כתובת מקומית לקובץ במראה (תמונה). הצלחה נשמרת במטמון לפי תיקייה ונתיב;
+  // כישלון לא, כדי שכונן שחובר מחדש יציג את התמונות ברענון הבא.
+  const mirrorFiles = new Map();
+  function mirrorFileUrl(path) {
+    if (!mirror) return Promise.resolve(null);
+    const key = mirror.folderToken + '\n' + path;
+    if (!mirrorFiles.has(key)) {
+      const folderToken = mirror.folderToken;
+      mirrorFiles.set(key, (async () => {
+        for (const candidate of StoreOfflineMirror.fileCandidates(path)) {
+          try { return await sdk('fs.openFolderFile', { folderToken, path: candidate }); } catch {}
+        }
+        mirrorFiles.delete(key);
+        return null;
+      })());
+    }
+    return mirrorFiles.get(key).then(file => (file ? file.url : null));
+  }
+
+  // משחרר את הקבצים שנפתחו מתיקייה שנותקה או הוחלפה.
+  function releaseMirrorFiles(folderToken) {
+    for (const [key, pending] of mirrorFiles) {
+      if (!key.startsWith(folderToken + '\n')) continue;
+      mirrorFiles.delete(key);
+      pending.then(file => { if (file) revokeFileToken(file.token); });
+    }
+  }
+
+  // תמונות המראה נכתבות עם data-mirror ומקבלות src כשהכתובת המקומית מוכנה.
+  function hydrateMirrorImages(root) {
+    const imgs = root.matches('img[data-mirror]') ? [root] : [...root.querySelectorAll('img[data-mirror]')];
+    imgs.filter(img => !img.dataset.mirrorState).forEach(img => {
+      img.dataset.mirrorState = 'pending';
+      mirrorFileUrl(img.dataset.mirror).then(url => {
+        img.dataset.mirrorState = url ? 'ready' : 'missing';
+        if (url) img.src = url;
+      });
+    });
+  }
+  new MutationObserver(records => {
+    for (const r of records) r.addedNodes.forEach(n => { if (n.nodeType === 1) hydrateMirrorImages(n); });
+  }).observe(document.body, { childList: true, subtree: true });
+
+  // src ל-<img>: כתובת רגילה, או data-mirror לקובץ במראה.
+  function imgSrcAttr(u) {
+    return StoreOfflineMirror.isMirrorUrl(u)
+      ? `src="${EMPTY_IMG}" data-mirror="${esc(StoreOfflineMirror.pathOf(u))}"`
+      : `src="${esc(u)}"`;
+  }
+  const EMPTY_IMG = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
 
   // ── רב-לשוניות ───────────────────────────────────────────────────
   // עברית היא שפת הבסיס: מפתחות התרגום הם מחרוזות המקור בעברית, ושפה שאין לה
@@ -1214,7 +1399,7 @@
     sortLocale = lang;
     translateStatic();
     // אם הקטלוג כבר נטען — מרעננים את התצוגה כדי שהטקסט הדינמי יתורגם גם הוא
-    if (catalogReady && !catalogLoading) { initTags(); initCatsBar(); renderCurrentView({ preserve: true }); }
+    if (catalogReady && !catalogLoading) { initTags(); initCatsBar(); renderMirrorBanner(); renderCurrentView({ preserve: true }); }
   }
 
   let allPlugins = [];
@@ -1533,8 +1718,7 @@
     const list = document.getElementById('updates-list');
     list.innerHTML = '';
     updates.forEach(({ installed, plugin }) => {
-      const downloadUrl = plugin.downloadUrl.startsWith('http')
-        ? plugin.downloadUrl : BASE + plugin.downloadUrl;
+      const downloadUrl = absUrl(plugin.downloadUrl);
       const row = document.createElement('div');
       row.className = 'update-row';
       row.innerHTML = `
@@ -1658,6 +1842,40 @@
     reload();
   });
 
+  async function loadOnlineSource() {
+    const [catalogRes, homeRes] = await Promise.all([
+      apiFetch(withAppVersion(API)),
+      // דף הבית האצור — כשל בו אינו מפיל את החנות (נופלים ל"כל התוספים")
+      apiFetch(withAppVersion(BASE + '/api/plugins/store-home')).catch(() => null),
+    ]);
+    if (catalogRes.status !== 200) throw new Error(`HTTP ${catalogRes.status}`);
+    let home = null;
+    if (homeRes && homeRes.status === 200) {
+      try { home = JSON.parse(homeRes.body); } catch { /* נופלים ל"כל התוספים" */ }
+    }
+    const plugins = JSON.parse(catalogRes.body);
+    if (!Array.isArray(plugins)) throw new Error('invalid catalogue');
+    return { plugins, home, mirror: null };
+  }
+
+  // אינטרנט קודם; כשהאתר לא נטען — מראת העדכונים האופליין, אם נבחרה. גם חסימה
+  // של סינון או דף שאינו הקטלוג (HTTP 418, HTML) נחשבים כאן "אין אתר".
+  async function loadCatalogSource() {
+    try {
+      return await loadOnlineSource();
+    } catch (e) {
+      const saved = await savedMirror();
+      if (!saved) throw e;
+      try {
+        return await loadMirrorSource(saved);
+      } catch (mirrorError) {
+        e.mirrorError = mirrorError;
+        e.mirrorName = saved.name || '';
+        throw e;
+      }
+    }
+  }
+
   async function reload() {
     const seq = ++reloadSeq;
     renderSeq++;
@@ -1668,27 +1886,24 @@
     hide('grid'); hide('empty'); hide('error'); hide('home'); hide('view-title'); hide('detail-page');
     show('loading');
     try {
-      const [catalogRes, installedRes, homeRes] = await Promise.all([
-        apiFetch(withAppVersion(API)),
+      const [source, installedRes] = await Promise.all([
+        loadCatalogSource(),
         Otzaria.call('plugin.listInstalled', {}),
-        // דף הבית האצור — כשל בו אינו מפיל את החנות (נופלים ל"כל התוספים")
-        apiFetch(withAppVersion(BASE + '/api/plugins/store-home')).catch(() => null),
       ]);
       if (seq !== reloadSeq) return;
-      if (catalogRes.status !== 200) throw new Error(`HTTP ${catalogRes.status}`);
-      const rawCatalog = JSON.parse(catalogRes.body);
+      mirror = source.mirror;
       // לכל תוסף בוחרים את הגרסה הגבוהה ביותר התואמת לגרסת אוצריא של המשתמש
       // (לא בהכרח האחרונה). תוסף שאין לו אף גרסה תואמת — מוסר מהרשימה. כך
       // המשתמש רואה ומתעדכן לגרסה התומכת גם אם הגרסה האחרונה אינה תואמת אצלו.
-      allPlugins = rawCatalog.map(toEffectivePlugin).filter(Boolean);
+      allPlugins = source.plugins.map(toEffectivePlugin).filter(Boolean);
       if (installedRes.success) {
         adoptInstalledList(installedRes.data);
       }
-      storeHome = null;
-      if (homeRes && homeRes.status === 200) {
-        try { storeHome = JSON.parse(homeRes.body); } catch { /* נופלים ל"כל התוספים" */ }
-      }
+      storeHome = source.home;
       categoryCache = new Map();
+      // במראה החברות בקטגוריות כבר בקטלוג — אין מה לבקש מהשרת.
+      if (mirror) storeHome.categories.forEach(c => categoryCache.set(c.slug, { ...c, plugins: c.members }));
+      renderMirrorBanner();
       catalogReady = true;
       catalogLoading = false;
       reconcileView();
@@ -1698,13 +1913,16 @@
       if (seq !== reloadSeq) return;
       restoreState.activate();
       hide('new-toast');
-      checkNewPlugins();
+      // המראה עשויה להכיל רק חלק מהחנות; היא אינה מעדכנת את רשימת המוכרים.
+      if (!mirror) checkNewPlugins();
       const updates = getAvailableUpdates();
       if (updates.length > 0) showUpdatesModal(updates);
     } catch (e) {
       if (seq !== reloadSeq) return;
       catalogLoading = false;
       hide('loading');
+      mirror = null;
+      renderMirrorBanner();
       showLoadError(e);
     }
     if (seq === reloadSeq) refreshBtn.classList.remove('spinning');
@@ -2105,7 +2323,7 @@
 
     let list = null;
     let relaxed = false;
-    try {
+    if (!mirror) try {
       const status = document.getElementById('status-filter').value;
       const url = `${API}/search?q=${encodeURIComponent(q)}&limit=50${status !== 'all' ? `&status=${encodeURIComponent(status)}` : ''}`;
       const res = await apiFetch(withAppVersion(url));
@@ -2239,7 +2457,7 @@
     const art = document.createElement('article');
     art.className = 'card';
 
-    const downloadUrl = p.downloadUrl.startsWith('http') ? p.downloadUrl : BASE + p.downloadUrl;
+    const downloadUrl = absUrl(p.downloadUrl);
 
     art.innerHTML = `
       <div class="card-head">
@@ -2294,8 +2512,8 @@
     if (!options.preserve) pendingScroll = 0;
     showDetailPage();
 
-    const downloadUrl = p.downloadUrl.startsWith('http') ? p.downloadUrl : BASE + p.downloadUrl;
-    const screenshots = (p.screenshots || []).map(s => s.startsWith('http') ? s : BASE + s);
+    const downloadUrl = absUrl(p.downloadUrl);
+    const screenshots = (p.screenshots || []).map(absUrl);
     const shortDesc = String(p.shortDescription || '').trim();
     const fullDesc = String(p.description || '').trim();
     const heroDesc = shortDesc || fullDesc;
@@ -2343,7 +2561,7 @@
         <section class="detail-section">
           ${headingHtml(t('צילומי מסך'), 'h3', 'section-head')}
           <div class="screenshots-row scroll-x">
-            ${screenshots.map(s => `<img class="screenshot-thumb" src="${esc(s)}" alt="${esc(t('צילום מסך'))}" loading="lazy">`).join('')}
+            ${screenshots.map(s => `<img class="screenshot-thumb" ${imgSrcAttr(s)} alt="${esc(t('צילום מסך'))}" loading="lazy">`).join('')}
           </div>
         </section>` : ''}
         ${showAbout ? `
@@ -2444,9 +2662,10 @@
   // אייקון התוסף באריח (כרטיס, שורת עדכון, ראש דף הפרטים). בלי תמונה — הלוגו של
   // אוצריא בחצי הגודל. alt ריק: השם כתוב ממש לצד האייקון.
   function pluginIconHtml(p, sizeClass) {
-    const src = p.image ? (p.image.startsWith('http') ? p.image : BASE + p.image) : DEFAULT_IMG;
+    // במראה אין רשת: בלי תמונה האריח נשאר ריק במקום לפנות לאתר.
+    const src = p.image ? absUrl(p.image) : (mirror ? EMPTY_IMG : DEFAULT_IMG);
     return `<span class="plugin-icon${sizeClass ? ' ' + sizeClass : ''}${p.image ? '' : ' is-fallback'}">`
-      + `<img src="${esc(src)}" alt="" loading="lazy"></span>`;
+      + `<img ${imgSrcAttr(src)} alt="" loading="lazy"></span>`;
   }
 
   // כותרת עם קישוט (קו דק ונקודת זהב, כמו SectionHeading באתר), מיושרת להתחלה.
@@ -2619,23 +2838,54 @@
     return /SocketException|Failed host lookup|No address associated|Network is unreachable|network.*unreachable|Connection (refused|reset|failed|closed|timed out)|timed? ?out|ERR_INTERNET_DISCONNECTED|ERR_NAME_NOT_RESOLVED|ERR_NETWORK|Failed to fetch|NetworkError|HandshakeException|ClientException|errno|שגיאת רשת|Network error/i.test(msg);
   }
 
+  // אין רשת: חיבור שנפל, או הרשאת הרשת של התוסף כבויה (כך החנות נשארת זמינה
+  // במצב "מנותק" של אוצריא).
+  function isNetworkUnavailable(e) {
+    return isOfflineError(e) || /network\.access/.test(String((e && e.message) || e || ''));
+  }
+
+  // הסבר למה המראה השמורה לא נטענה.
+  function mirrorErrorText(e) {
+    const name = e.mirrorName ? `„${e.mirrorName}”` : '';
+    if (isMirrorFolderGone(e.mirrorError)) {
+      return t('תיקיית העדכונים {name} לא נמצאה. חברו את הכונן ונסו שוב, או בחרו תיקייה אחרת.', { name });
+    }
+    if (/permission/i.test(e.mirrorError.message)) {
+      return t('לחנות אין הרשאה לקרוא קבצים מהמחשב. אפשרו אותה בהגדרות התוסף ונסו שוב.');
+    }
+    return t('בתיקייה {name} לא נמצאו תוספים מ"עדכוני אוצריא". בחרו את תיקיית OtzariaData או תיקייה בתוכה.', { name });
+  }
+
   function showLoadError(e) {
     const box = document.getElementById('error');
     const icon = document.getElementById('error-icon');
     const body = document.getElementById('error-body');
-    if (isOfflineError(e)) {
+    if (isNetworkUnavailable(e)) {
       box.classList.add('offline');
       icon.innerHTML = OFFLINE_ICON;
       body.innerHTML =
         `<p class="state-title">${esc(t('אין חיבור לאינטרנט'))}</p>` +
-        `<p class="state-desc">${esc(t('חנות התוספים צריכה אינטרנט כדי לעבוד. כשהמחשב יתחבר לאינטרנט — החנות תעבוד כרגיל.'))}</p>` +
+        (e.mirrorError ? `<p class="state-desc">${esc(mirrorErrorText(e))}</p>` : '') +
+        `<p class="state-desc">${esc(t('אפשר להתקין ולעדכן תוספים גם בלי אינטרנט, מתיקייה שהורדה במחשב אחר בתוכנת "עדכוני אוצריא" (למשל בכונן נייד).'))}</p>` +
         `<p class="state-desc">${esc(t('אם המחשב הזה לא אמור להיות מחובר לאינטרנט, אפשר להסיר את התוסף, או לעבור למצב "מנותק" בהגדרות התוכנה (בהגדרות של אוצריא עצמה, לא של התוסף).'))}</p>` +
-        `<button class="btn btn-md btn-filled error-retry" type="button">${esc(t('נסו שוב'))}</button>`;
+        `<div class="error-actions">` +
+        `<button class="btn btn-md btn-filled error-mirror" type="button">${esc(t('בחירת תיקיית עדכונים אופליין'))}</button>` +
+        `<button class="btn btn-md btn-outlined error-retry" type="button">${esc(t('נסו שוב'))}</button>` +
+        `</div>`;
       body.querySelector('.error-retry').addEventListener('click', () => reload());
+      body.querySelector('.error-mirror').addEventListener('click', e2 => pickMirrorFolder(e2.currentTarget));
     } else {
       box.classList.remove('offline');
       icon.innerHTML = ERROR_ICON;
-      body.innerHTML = `<p class="state-title">${esc(t('שגיאה בטעינת התוספים: {msg}', { msg: (e && e.message) || '' }))}</p>`;
+      // גם אתר חסום (סינון) או תקול: אפשר לנסות שוב או להשתמש בתיקיית העדכונים.
+      body.innerHTML = `<p class="state-title">${esc(t('שגיאה בטעינת התוספים: {msg}', { msg: (e && e.message) || '' }))}</p>` +
+        (e && e.mirrorError ? `<p class="state-desc">${esc(mirrorErrorText(e))}</p>` : '') +
+        `<div class="error-actions">` +
+        `<button class="btn btn-md btn-outlined error-retry" type="button">${esc(t('נסו שוב'))}</button>` +
+        `<button class="btn btn-md btn-text error-mirror" type="button">${esc(t('בחירת תיקיית עדכונים אופליין'))}</button>` +
+        `</div>`;
+      body.querySelector('.error-retry').addEventListener('click', () => reload());
+      body.querySelector('.error-mirror').addEventListener('click', e2 => pickMirrorFolder(e2.currentTarget));
     }
     show('error');
   }
@@ -2669,8 +2919,7 @@
   // מאתר את התוסף בקטלוג לפי כתובת ההורדה שלו (הכפתורים נושאים רק data-url).
   function pluginByDownloadUrl(downloadUrl) {
     return allPlugins.find(p => {
-      const u = p.downloadUrl.startsWith('http') ? p.downloadUrl : BASE + p.downloadUrl;
-      return u === downloadUrl;
+      return absUrl(p.downloadUrl) === downloadUrl;
     }) || null;
   }
 
@@ -2732,6 +2981,9 @@
     btn.innerHTML = `<span class="btn-spinner"></span>${esc(words.progress)}`;
     try {
       return await restoreState.guard(async () => {
+        if (StoreOfflineMirror.isMirrorUrl(downloadUrl)) {
+          return installFromMirror(btn, plugin, downloadUrl, words, offerOpen);
+        }
         const token = await createInstallToken(downloadUrl);
         let request;
         try {
@@ -2783,6 +3035,65 @@
       btn.textContent = t('לא ניתן להתחיל את הפעולה כרגע. נסו שוב');
       return 'failure';
     }
+  }
+
+  // התקנה מקובץ במראה. אוצריא מוודאת שהקובץ בתוך התיקייה המאושרת ומציגה את
+  // דיאלוג ההרשאות; אין דיווח מהשרת, ולכן ההצלחה נקבעת לפי plugin.listInstalled.
+  async function installFromMirror(btn, plugin, downloadUrl, words, offerOpen) {
+    const folderToken = mirror && mirror.folderToken;
+    let request = null;
+    let errorText = '';
+    let transportLost = false;
+    if (folderToken && plugin) {
+      for (const path of StoreOfflineMirror.fileCandidates(StoreOfflineMirror.pathOf(downloadUrl))) {
+        errorText = '';
+        try {
+          request = await Otzaria.call('plugin.requestInstall', { folderToken, path });
+          transportLost = false;
+        } catch (e) {
+          request = null;
+          transportLost = true;
+          errorText = String((e && e.message) || e);
+        }
+        if (request && request.error) errorText = [request.error.code, request.error.message].filter(Boolean).join(': ');
+        if (!/not_found: file not found/.test(errorText)) break;
+      }
+    }
+    if (!request || request.success !== true || request.data !== true) {
+      if (transportLost) restoreState.keepAliveForUnreportedOperation();
+      btn.disabled = false;
+      const error = new Error(errorText);
+      btn.textContent = request && request.success === true ? t('ההתקנה בוטלה')
+        : /url required/.test(errorText) ? t('נדרשת גרסת אוצריא חדשה יותר להתקנה מהתיקייה')
+        : isMirrorFolderGone(error) || /permission/i.test(errorText)
+          ? mirrorErrorText({ mirrorError: error, mirrorName: mirror ? mirror.name : '' })
+        : /not_found/.test(errorText) ? t('קובץ התוסף לא נמצא בתיקייה')
+        : t('שגיאה');
+      return 'failure';
+    }
+    const result = await waitForLocalInstall(plugin);
+    if (result === 'success') {
+      btn.textContent = words.success;
+      const pluginId = offerOpen ? installedIdOf(plugin) : null;
+      if (pluginId) makeOpenButton(btn, pluginId, words.successOpen);
+    } else {
+      restoreState.keepAliveForUnreportedOperation();
+      btn.textContent = t('נשלח ✓');
+    }
+    return result;
+  }
+
+  // ממתין עד שהגרסה המותקנת מגיעה לגרסה שנשלחה. ביטול בדיאלוג אינו מדווח,
+  // ולכן אחרי פרק הזמן נשאר "נשלח ✓".
+  async function waitForLocalInstall(plugin) {
+    const startedAt = Date.now();
+    while (Date.now() - startedAt < POLL_TIMEOUT_MS) {
+      await new Promise(r => setTimeout(r, POLL_INTERVAL_MS));
+      await refreshInstalledFromApp();
+      const inst = findInstalled(plugin);
+      if (inst && compareVersions(inst.version, plugin.version) >= 0) return 'success';
+    }
+    return 'no_report';
   }
 
   // הופך כפתור התקנה/עדכון שסיים בהצלחה לכפתור פתיחה — הודעת ההצלחה עצמה

@@ -2,7 +2,7 @@
   "name": "otzaria-plugins-store-tests",
   "private": true,
   "scripts": {
-    "test": "node --test --test-concurrency=1 tests/foreground-restore.test.cjs"
+    "test": "node --test --test-concurrency=1 tests/foreground-restore.test.cjs tests/offline-mirror.test.cjs"
   },
   "devDependencies": {
     "playwright": "1.62.1"

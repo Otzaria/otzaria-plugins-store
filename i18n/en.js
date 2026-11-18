@@ -32,8 +32,6 @@ window.TRANSLATIONS.en = {
   'שגיאת רשת': 'Network error',
   'שגיאה בטעינת התוספים: {msg}': 'Failed to load plugins: {msg}',
   'אין חיבור לאינטרנט': 'No internet connection',
-  'חנות התוספים צריכה אינטרנט כדי לעבוד. כשהמחשב יתחבר לאינטרנט — החנות תעבוד כרגיל.':
-    'The Plugin Store needs the internet to work. Once this computer is connected, the store will work as usual.',
   'אם המחשב הזה לא אמור להיות מחובר לאינטרנט, אפשר להסיר את התוסף, או לעבור למצב "מנותק" בהגדרות התוכנה (בהגדרות של אוצריא עצמה, לא של התוסף).':
     'If this computer isn’t supposed to be connected to the internet, you can remove this plugin, or switch to “Offline” mode in the app’s settings (Otzaria’s own settings, not the plugin’s).',
   'נסו שוב': 'Try again',
@@ -134,4 +132,27 @@ window.TRANSLATIONS.en = {
     'A new plugin is available in the Plugin Store. Click here to open it.',
   'יש {n} תוספים חדשים בחנות התוספים. לחצו כאן לפתיחה.':
     '{n} new plugins are available in the Plugin Store. Click here to open it.',
+
+  // ── מצב אופליין: תיקיית "עדכוני אוצריא" ──
+  'אפשר להתקין ולעדכן תוספים גם בלי אינטרנט, מתיקייה שהורדה במחשב אחר בתוכנת "עדכוני אוצריא" (למשל בכונן נייד).':
+    'You can also install and update plugins without internet, from a folder downloaded on another computer with "Otzaria Offline Update" (for example on a USB drive).',
+  'בחירת תיקיית עדכונים אופליין': 'Choose an offline update folder',
+  'בחירת תיקיית העדכונים האופליין': 'Choose the offline update folder',
+  'אתר החנות אינו זמין. מוצגים התוספים מתיקיית העדכונים {name}, שהורדו ב-{date}.':
+    'The store website is unavailable. Showing plugins from the update folder {name}, downloaded on {date}.',
+  'אתר החנות אינו זמין. מוצגים התוספים מתיקיית העדכונים {name}.':
+    'The store website is unavailable. Showing plugins from the update folder {name}.',
+  'החלפת תיקייה': 'Change folder',
+  'ניתוק התיקייה': 'Disconnect folder',
+  'תיקיית העדכונים {name} לא נמצאה. חברו את הכונן ונסו שוב, או בחרו תיקייה אחרת.':
+    'The update folder {name} was not found. Connect the drive and try again, or choose another folder.',
+  'בתיקייה {name} לא נמצאו תוספים מ"עדכוני אוצריא". בחרו את תיקיית OtzariaData או תיקייה בתוכה.':
+    'No plugins from "Otzaria Offline Update" were found in the folder {name}. Choose the OtzariaData folder or a folder inside it.',
+  'לחנות אין הרשאה לקרוא קבצים מהמחשב. אפשרו אותה בהגדרות התוסף ונסו שוב.':
+    'The store has no permission to read files on this computer. Allow it in the plugin settings and try again.',
+  'גרסת אוצריא שלך אינה תומכת בכך. עדכנו את אוצריא.': 'Your Otzaria version does not support this. Please update Otzaria.',
+  'לא ניתן לבחור תיקייה. בדקו את הרשאות התוסף.': 'Cannot choose a folder. Check the plugin permissions.',
+  'נדרשת גרסת אוצריא חדשה יותר להתקנה מהתיקייה': 'Installing from the folder requires a newer Otzaria version',
+  'קובץ התוסף לא נמצא בתיקייה': 'The plugin file was not found in the folder',
+  'ההתקנה בוטלה': 'Installation cancelled',
 };
