@@ -464,3 +464,15 @@ browserTest('oversized live input clears rather than saving a truncated search',
   await store.page.locator('#search').fill('book');
   await store.saved(saved => saved.search === 'book');
 });
+
+browserTest('returning to home resets a saved non-recommended sort so the next launch opens home', async open => {
+  const store = await open();
+  await store.saved(saved => saved.view.type === 'home');
+  await store.page.locator('#sort-select').selectOption('newest');
+  await store.saved(saved => saved.view.type === 'all' && saved.sort === 'newest');
+  await store.page.locator('.cat-chip[data-key="home"]').click();
+  await store.saved(saved => saved.view.type === 'home' && saved.sort === 'recommended');
+  const sortWrites = store.host.calls.filter(call => call.method === 'storage.set' && call.args.key === 'otzaria_store_sort');
+  assert.equal(sortWrites.at(-1).args.value, 'recommended');
+  assert.equal(await store.page.evaluate(() => localStorage.getItem('otzaria_store_sort')), 'recommended');
+});

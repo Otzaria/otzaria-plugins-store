@@ -2132,6 +2132,12 @@
       bar.appendChild(makeCatChip(t('בית'), 'home', () => {
         clearSearch();
         currentView = { type: 'home' };
+        // מעבר ידני לבית מאפס את המיון השמור ל"מומלצים" — אחרת מיון "החדשים ביותר"
+        // שנשמר קודם יפתח שוב את "כל התוספים" בהפעלה הבאה במקום את דף הבית.
+        preferenceChanged = true;
+        document.getElementById('sort-select').value = 'recommended';
+        try { localStorage.setItem(SORT_KEY, 'recommended'); } catch {}
+        persistentSet(SORT_KEY, 'recommended');
         renderCurrentView();
       }));
     }
